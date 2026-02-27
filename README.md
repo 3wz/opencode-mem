@@ -11,12 +11,14 @@ An opencode plugin that connects to [claude-mem](https://github.com/thedotmack/c
 - Shares the same claude-mem worker, database, and memory as claude-code
 - Provides MCP search tools for querying past sessions
 - Gracefully degrades when the claude-mem worker is unavailable
+- Automatically installs and configures claude-mem on first load
 
 ## Prerequisites
 
-- [claude-mem](https://github.com/thedotmack/claude-mem) must be installed and initialized
-- The claude-mem worker must be running (port 37777 by default)
 - opencode installed
+- npm available in PATH (used to install claude-mem if not already present)
+
+claude-mem is installed automatically when the plugin first loads. You don't need to install it manually.
 
 ## Installation
 
@@ -52,9 +54,30 @@ Copy the plugin to your opencode plugins directory:
 cp -r node_modules/opencode-claude-mem .opencode/plugins/opencode-claude-mem
 ```
 
+## Automatic Setup
+
+When the plugin loads for the first time, it runs an automatic setup sequence. No manual steps required.
+
+The setup runs these steps in order:
+
+1. **Detect** — checks if `claude-mem` is already installed (looks in PATH and `~/.claude-mem`)
+2. **Install** — runs `npm install -g claude-mem` if not found; skipped if already installed
+3. **Configure MCP** — adds the `claude-mem` MCP entry to `~/.config/opencode/opencode.json` if missing
+4. **Copy skills** — copies the `mem-search` skill to `~/.config/opencode/skills/mem-search/` if missing
+5. **Start worker** — starts the claude-mem worker process if not already running
+
+All steps are idempotent — safe to run multiple times without side effects. All steps fail gracefully; if any step fails, the plugin continues loading and the remaining steps still run.
+
+### What Gets Configured
+
+| File | What changes |
+|------|-------------|
+| `~/.config/opencode/opencode.json` | MCP entry for `claude-mem` added under `mcp` key |
+| `~/.config/opencode/skills/mem-search/` | Skill files copied from the plugin package |
+
 ## MCP Search Setup
 
-To enable memory search via MCP tools, add to your `opencode.json`:
+MCP search is configured automatically by the plugin. If you prefer to configure it manually, add to your `opencode.json`:
 
 ```json
 {
@@ -69,7 +92,7 @@ To enable memory search via MCP tools, add to your `opencode.json`:
 
 ## Skill Setup
 
-Copy the mem-search skill to enable guided memory search:
+The mem-search skill is copied automatically by the plugin. To install it manually:
 
 ```bash
 cp -r node_modules/opencode-claude-mem/skills/mem-search .opencode/skills/
@@ -105,8 +128,19 @@ Environment variables:
 - Check that claude-mem has been used with claude-code to build up memory
 
 **Worker not starting:**
-- Install claude-mem: follow instructions at https://github.com/thedotmack/claude-mem
+- Check if the worker is already running on a different port
 - Start the worker manually: `claude-mem start`
+- If auto-setup failed to install claude-mem, install it manually: `npm install -g claude-mem`
+
+**Auto-setup failed to install claude-mem:**
+- Confirm npm is available: `npm --version`
+- Check for permission issues with global npm installs; you may need to configure npm's prefix or use a version manager like nvm
+- Install manually: `npm install -g claude-mem`, then restart opencode
+
+**Auto-setup failed to configure MCP or copy skills:**
+- Check that `~/.config/opencode/` exists and is writable
+- Run the setup manually: copy the MCP config and skill files as shown in the sections above
+- The plugin still works for memory injection even if MCP search setup fails
 
 **Port conflict:**
 - Check `~/.claude-mem/settings.json` for the configured port

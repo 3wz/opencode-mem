@@ -3,6 +3,7 @@ const DEFAULT_PORT = 37777;
 export interface McpConfig {
   type: "remote";
   url: string;
+  enabled?: boolean;
 }
 
 export interface OpenCodeMcpConfig {
@@ -18,6 +19,7 @@ export function generateMcpConfig(port = DEFAULT_PORT): OpenCodeMcpConfig {
     "claude-mem": {
       type: "remote",
       url: `http://localhost:${port}/mcp`,
+      enabled: true,
     },
   };
 }

@@ -236,4 +236,66 @@ describe("OpenCodeMem plugin", () => {
 
     await expect(OpenCodeMem(input as any)).resolves.toBeDefined();
   });
+
+  it("calls autoSetup when worker not running", async () => {
+    detectInstalled = false;
+    detectWorkerRunning = false;
+
+    let autoSetupCalled = false;
+    const mockAutoSetup = async () => {
+      autoSetupCalled = true;
+      return {
+        binary: { status: "success" as const, message: "" },
+        install: { status: "skipped" as const, message: "" },
+        mcp: { status: "success" as const, message: "" },
+        skills: { status: "success" as const, message: "" },
+        worker: { status: "success" as const, message: "" },
+      };
+    };
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+      mockAutoSetup,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    // Wait a bit for the fire-and-forget promise to settle
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(autoSetupCalled).toBe(true);
+  });
+
+  it("does not call autoSetup when worker is running", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    let autoSetupCalled = false;
+    const mockAutoSetup = async () => {
+      autoSetupCalled = true;
+      return {
+        binary: { status: "success" as const, message: "" },
+        install: { status: "skipped" as const, message: "" },
+        mcp: { status: "success" as const, message: "" },
+        skills: { status: "success" as const, message: "" },
+        worker: { status: "success" as const, message: "" },
+      };
+    };
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+      mockAutoSetup,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    // Wait a bit to ensure no async call happens
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(autoSetupCalled).toBe(false);
+  });
 });

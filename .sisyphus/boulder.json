@@ -1,9 +1,9 @@
 {
-  "active_plan": "/Users/heitor/Developer/github.com/bloodf/opencode-mem/.sisyphus/plans/opencode-mem.md",
-  "started_at": "2026-02-27T19:22:40.964Z",
+  "active_plan": "/Users/heitor/Developer/github.com/bloodf/opencode-mem/.sisyphus/plans/auto-install.md",
+  "started_at": "2026-02-27T20:48:37.305Z",
   "session_ids": [
     "ses_35f8dbcafffe69xAYwLc9953Mg"
   ],
-  "plan_name": "opencode-mem",
+  "plan_name": "auto-install",
   "agent": "atlas"
 }

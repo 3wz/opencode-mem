@@ -1,6 +1,8 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { ClaudeMemClient } from "./client.js";
 import { detectClaudeMem, getWorkerPort } from "./utils/detect.js";
+import { autoSetup } from "./setup/auto-setup.js";
+import { createDefaultDeps } from "./setup/types.js";
 import type { PluginState } from "./types.js";
 
 /**
@@ -46,6 +48,17 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
     log("Claude-mem not detected. Memory features disabled.");
   }
 
+  // Auto-setup: install/configure claude-mem if needed (fire-and-forget)
+  if (!detection.workerRunning) {
+    const setupDeps = createDefaultDeps(log);
+    void autoSetup(setupDeps).then((result) => {
+      if (result.worker.status === "success") {
+        state.isWorkerRunning = true;
+        log("Auto-setup started the worker. Memory features now active.");
+      }
+    });
+  }
+
   return {
     event: async ({ event }) => {
       if (event.type === "session.created") {
@@ -79,6 +92,7 @@ export function createPluginWithDependencies(
   clientFactory: (port: number, timeout: number, log: (msg: string) => void) => any,
   detectFn?: () => Promise<any>,
   getPortFn?: () => number,
+  autoSetupFn?: (deps: any) => Promise<any>,
 ): Plugin {
   return async ({ client, project, directory }) => {
     const port = (getPortFn || getWorkerPort)();
@@ -116,6 +130,18 @@ export function createPluginWithDependencies(
       log("Claude-mem installed but worker not running. Memory features disabled.");
     } else {
       log("Claude-mem not detected. Memory features disabled.");
+    }
+
+    // Auto-setup: install/configure claude-mem if needed (fire-and-forget)
+    if (!detection.workerRunning) {
+      const setupDeps = createDefaultDeps(log);
+      const setupFn = autoSetupFn || autoSetup;
+      void setupFn(setupDeps).then((result) => {
+        if (result.worker.status === "success") {
+          state.isWorkerRunning = true;
+          log("Auto-setup started the worker. Memory features now active.");
+        }
+      });
     }
 
     return {

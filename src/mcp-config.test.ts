@@ -5,6 +5,7 @@ describe("generateMcpConfig", () => {
   it("returns object with claude-mem key", () => {
     const config = generateMcpConfig();
     expect(config).toHaveProperty("claude-mem");
+    expect(config["claude-mem"].enabled).toBe(true);
   });
 
   it("returns URL with default port 37777", () => {
@@ -20,6 +21,7 @@ describe("generateMcpConfig", () => {
   it("sets type to remote", () => {
     const config = generateMcpConfig();
     expect(config["claude-mem"].type).toBe("remote");
+    expect(config["claude-mem"].enabled).toBe(true);
   });
 });
 
