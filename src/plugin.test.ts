@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 const mockInitSession = mock(async (_payload: unknown) => {});
 const mockCompleteSession = mock(async (_payload: unknown) => {});
+const mockSendObservation = mock(async (_payload: unknown) => {});
+const mockSendSummary = mock(async (_payload: unknown) => {});
+const mockGetContext = mock(async (_projectName: string) => ({ context: null, projectName: "" }));
 
 let detectInstalled = false;
 let detectWorkerRunning = false;
@@ -17,6 +20,18 @@ class MockClaudeMemClient {
 
   async completeSession(payload: unknown): Promise<void> {
     await mockCompleteSession(payload);
+  }
+
+  async sendObservation(payload: unknown): Promise<void> {
+    await mockSendObservation(payload);
+  }
+
+  async sendSummary(payload: unknown): Promise<void> {
+    await mockSendSummary(payload);
+  }
+
+  async getContext(projectName: string): Promise<{ context: string | null; projectName: string }> {
+    return mockGetContext(projectName);
   }
 }
 
@@ -87,6 +102,9 @@ describe("OpenCodeMem plugin", () => {
     detectPort = 37777;
     mockInitSession.mockClear();
     mockCompleteSession.mockClear();
+    mockSendObservation.mockClear();
+    mockSendSummary.mockClear();
+    mockGetContext.mockClear();
   });
 
   it("is a function", async () => {
@@ -110,7 +128,7 @@ describe("OpenCodeMem plugin", () => {
     await expect(result).resolves.toBeDefined();
   });
 
-  it("returns hooks object with event handler", async () => {
+  it("returns hooks object with all expected keys", async () => {
     const OpenCodeMem = createPluginWithDependencies(
       () => new MockClaudeMemClient(),
       mockDetect,
@@ -118,8 +136,34 @@ describe("OpenCodeMem plugin", () => {
     );
     const input = createMockInput();
     const hooks = await OpenCodeMem(input as any);
-    expect(hooks).toHaveProperty("event");
+
+    expect("event" in hooks).toBe(true);
+    expect("chat.message" in hooks).toBe(true);
+    expect("tool.execute.after" in hooks).toBe(true);
+    expect("experimental.chat.system.transform" in hooks).toBe(true);
+    expect("experimental.session.compacting" in hooks).toBe(true);
     expect(typeof hooks.event).toBe("function");
+  });
+
+  it("event handler dispatches session.idle to summary", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    await hooks.event!({ event: { type: "session.idle", properties: { sessionID: "sess_idle_123" } } as any });
+
+    expect(mockSendSummary).toHaveBeenCalledTimes(1);
+    expect(mockSendSummary).toHaveBeenCalledWith({
+      claudeSessionId: "sess_idle_123",
+      projectName: "/test/project",
+    });
   });
 
   it("calls initSession on session.created when worker is running", async () => {
