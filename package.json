@@ -1,5 +1,5 @@
 {
-  "name": "opencode-claude-mem",
+  "name": "@bloodf/opencode-claude-mem",
   "version": "0.1.0",
   "type": "module",
   "description": "OpenCode plugin adapter for claude-mem persistent memory",
@@ -12,6 +12,19 @@
   "scripts": {
     "test": "bun test",
     "check": "bunx tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bloodf/opencode-mem.git"
+  },
+  "homepage": "https://github.com/bloodf/opencode-mem#readme",
+  "bugs": {
+    "url": "https://github.com/bloodf/opencode-mem/issues"
+  },
+  "author": "bloodf",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": "*"

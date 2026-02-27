@@ -39,7 +39,7 @@ Add one line to your `opencode.json`:
 
 ```json
 {
-  "plugin": ["opencode-claude-mem"]
+  "plugin": ["@bloodf/opencode-claude-mem"]
 }
 ```
 
@@ -122,14 +122,14 @@ All steps are **idempotent** (safe to run multiple times) and **independent** (i
 ### npm (recommended)
 
 ```bash
-npm install opencode-claude-mem
+npm install @bloodf/opencode-claude-mem
 ```
 
 Then in `opencode.json`:
 
 ```json
 {
-  "plugin": ["opencode-claude-mem"]
+  "plugin": ["@bloodf/opencode-claude-mem"]
 }
 ```
 
@@ -137,14 +137,14 @@ Then in `opencode.json`:
 
 ```json
 {
-  "plugin": ["./node_modules/opencode-claude-mem"]
+  "plugin": ["./node_modules/@bloodf/opencode-claude-mem"]
 }
 ```
 
 ### Copy to plugins directory
 
 ```bash
-cp -r node_modules/opencode-claude-mem .opencode/plugins/opencode-claude-mem
+cp -r node_modules/@bloodf/opencode-claude-mem .opencode/plugins/opencode-claude-mem
 ```
 
 ### Prerequisites
@@ -208,7 +208,7 @@ MCP is configured automatically. If you need to set it up manually:
 The mem-search skill is copied automatically. To install manually:
 
 ```bash
-cp -r node_modules/opencode-claude-mem/skills/mem-search ~/.config/opencode/skills/
+cp -r node_modules/@bloodf/opencode-claude-mem/skills/mem-search ~/.config/opencode/skills/
 ```
 
 ---
