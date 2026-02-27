@@ -1,0 +1,239 @@
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+
+const mockInitSession = mock(async (_payload: unknown) => {});
+const mockCompleteSession = mock(async (_payload: unknown) => {});
+
+let detectInstalled = false;
+let detectWorkerRunning = false;
+let detectPort = 37777;
+
+// Mock ClaudeMemClient class
+class MockClaudeMemClient {
+  constructor(_port?: number, _timeout?: number, _log?: (msg: string) => void) {}
+
+  async initSession(payload: unknown): Promise<void> {
+    await mockInitSession(payload);
+  }
+
+  async completeSession(payload: unknown): Promise<void> {
+    await mockCompleteSession(payload);
+  }
+}
+
+// Mock detect function
+async function mockDetect() {
+  return {
+    installed: detectInstalled,
+    workerRunning: detectWorkerRunning,
+    port: detectPort,
+    dataDir: "/tmp/.claude-mem",
+  };
+}
+
+// Mock getWorkerPort function
+function mockGetPort() {
+  return detectPort;
+}
+
+// Import the plugin factory
+const { createPluginWithDependencies } = await import("./plugin.js");
+
+type MockInput = {
+  client: { app: { log: ReturnType<typeof mock> } };
+  project: { path?: string };
+  directory: string;
+  worktree: string;
+  serverUrl: URL;
+  $: unknown;
+};
+
+function createMockInput(projectPath = "/test/project"): MockInput {
+  return {
+    client: {
+      app: {
+        log: mock(() => ({ data: null, error: null, response: new Response() })),
+      },
+    },
+    project: { path: projectPath },
+    directory: "/test/project",
+    worktree: "/test/project",
+    serverUrl: new URL("http://localhost:3000"),
+    $: {},
+  };
+}
+
+function createSessionEvent(type: "session.created" | "session.deleted") {
+  return {
+    event: {
+      type,
+      properties: {
+        info: {
+          id: "sess_test123",
+          projectID: "proj_1",
+          directory: "/test",
+          title: "test",
+          version: "1",
+          time: { created: 0, updated: 0 },
+        },
+      },
+    },
+  };
+}
+
+describe("OpenCodeMem plugin", () => {
+  beforeEach(() => {
+    detectInstalled = false;
+    detectWorkerRunning = false;
+    detectPort = 37777;
+    mockInitSession.mockClear();
+    mockCompleteSession.mockClear();
+  });
+
+  it("is a function", async () => {
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    expect(typeof OpenCodeMem).toBe("function");
+  });
+
+  it("returns a Promise when called", async () => {
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const result = OpenCodeMem(input as any);
+    expect(result).toBeInstanceOf(Promise);
+    await expect(result).resolves.toBeDefined();
+  });
+
+  it("returns hooks object with event handler", async () => {
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+    expect(hooks).toHaveProperty("event");
+    expect(typeof hooks.event).toBe("function");
+  });
+
+  it("calls initSession on session.created when worker is running", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    await expect(hooks.event!(createSessionEvent("session.created") as any)).resolves.toBeUndefined();
+
+    expect(mockInitSession).toHaveBeenCalledTimes(1);
+    expect(mockInitSession).toHaveBeenCalledWith({
+      claudeSessionId: "sess_test123",
+      projectName: "/test/project",
+    });
+  });
+
+  it("calls completeSession on session.deleted when worker is running", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    await expect(hooks.event!(createSessionEvent("session.deleted") as any)).resolves.toBeUndefined();
+
+    expect(mockCompleteSession).toHaveBeenCalledTimes(1);
+    expect(mockCompleteSession).toHaveBeenCalledWith({
+      claudeSessionId: "sess_test123",
+      projectName: "/test/project",
+    });
+  });
+
+  it("handles unknown event type without throwing", async () => {
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    await expect(
+      hooks.event!({ event: { type: "file.edited", properties: { file: "foo.ts" } } as any }),
+    ).resolves.toBeUndefined();
+
+    expect(mockInitSession).toHaveBeenCalledTimes(0);
+    expect(mockCompleteSession).toHaveBeenCalledTimes(0);
+  });
+
+  it("does not call worker methods when worker is unavailable", async () => {
+    detectInstalled = false;
+    detectWorkerRunning = false;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    await expect(hooks.event!(createSessionEvent("session.created") as any)).resolves.toBeUndefined();
+    await expect(hooks.event!(createSessionEvent("session.deleted") as any)).resolves.toBeUndefined();
+
+    expect(mockInitSession).toHaveBeenCalledTimes(0);
+    expect(mockCompleteSession).toHaveBeenCalledTimes(0);
+  });
+
+  it("falls back to directory when project.path is undefined", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput(undefined);
+    const hooks = await OpenCodeMem(input as any);
+
+    await hooks.event!(createSessionEvent("session.created") as any);
+
+    expect(mockInitSession).toHaveBeenCalledWith({
+      claudeSessionId: "sess_test123",
+      projectName: "/test/project",
+    });
+  });
+
+  it("swallows client.app.log errors", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    input.client.app.log = mock(() => {
+      throw new Error("log failure");
+    });
+
+    await expect(OpenCodeMem(input as any)).resolves.toBeDefined();
+  });
+});

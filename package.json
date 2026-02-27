@@ -1,0 +1,24 @@
+{
+  "name": "opencode-claude-mem",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OpenCode plugin adapter for claude-mem persistent memory",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src/", "skills/", "README.md"],
+  "keywords": ["opencode", "claude-mem", "memory", "plugin", "ai"],
+  "scripts": {
+    "test": "bun test",
+    "check": "bunx tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "latest",
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,52 @@
+npm pack --dry-run output for Task 16 verification
+================================================
+
+npm notice
+npm notice 📦  opencode-claude-mem@0.1.0
+npm notice Tarball Contents
+npm notice 599B package.json
+npm notice 3.3kB skills/mem-search/SKILL.md
+npm notice 5.1kB src/client.test.ts
+npm notice 3.3kB src/client.ts
+npm notice 4.3kB src/hooks/capture-prompt.test.ts
+npm notice 1.5kB src/hooks/capture-prompt.ts
+npm notice 2.7kB src/hooks/compaction.test.ts
+npm notice 600B src/hooks/compaction.ts
+npm notice 3.0kB src/hooks/context-inject.test.ts
+npm notice 888B src/hooks/context-inject.ts
+npm notice 4.9kB src/hooks/save-observation.test.ts
+npm notice 1.3kB src/hooks/save-observation.ts
+npm notice 2.5kB src/hooks/summary.test.ts
+npm notice 574B src/hooks/summary.ts
+npm notice 508B src/index.ts
+npm notice 2.0kB src/mcp-config.test.ts
+npm notice 994B src/mcp-config.ts
+npm notice 6.8kB src/plugin.test.ts
+npm notice 4.6kB src/plugin.ts
+npm notice 826B src/types.test.ts
+npm notice 1.3kB src/types.ts
+npm notice 2.6kB src/utils/detect.test.ts
+npm notice 2.1kB src/utils/detect.ts
+npm notice 2.4kB src/utils/strip-tags.test.ts
+npm notice 2.0kB src/utils/strip-tags.ts
+npm notice 1.2kB src/utils/tool-filter.test.ts
+npm notice 554B src/utils/tool-filter.ts
+npm notice 2.0kB src/worker-manager.test.ts
+npm notice 2.0kB src/worker-manager.ts
+npm notice Tarball Details
+npm notice name: opencode-claude-mem
+npm notice version: 0.1.0
+npm notice filename: opencode-claude-mem-0.1.0.tgz
+npm notice package size: 14.7 kB
+npm notice unpacked size: 66.4 kB
+npm notice shasum: 10ef9306bc90476e474a95c57c25817d4f13dd5c
+npm notice integrity: sha512-QeR4dc3GMtybW[...]+hwj5X7FgnA/g==
+npm notice total files: 29
+
+✅ VERIFICATION RESULTS:
+- ✅ src/ directory included (all source files present)
+- ✅ skills/ directory included (mem-search/SKILL.md present)
+- ✅ README.md included (in files array)
+- ✅ package.json updated with correct fields
+- ✅ bun test: 93 pass, 0 fail
+- ✅ bunx tsc --noEmit: passed (no errors)

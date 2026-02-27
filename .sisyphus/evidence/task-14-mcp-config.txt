@@ -1,0 +1,69 @@
+TASK 14: MCP Server Configuration Generator
+============================================
+
+COMPLETION EVIDENCE
+===================
+
+1. FILES CREATED
+   ✓ src/mcp-config.ts (43 lines)
+     - generateMcpConfig(port?: number): OpenCodeMcpConfig
+     - generateInstallInstructions(port?: number): string
+     - Exports: McpConfig, OpenCodeMcpConfig interfaces
+     - DEFAULT_PORT = 37777
+
+   ✓ src/mcp-config.test.ts (58 lines)
+     - 9 tests total (exceeds 4+ requirement)
+     - Tests for generateMcpConfig: 4 tests
+     - Tests for generateInstallInstructions: 5 tests
+
+2. TEST RESULTS
+   ✓ bun test src/mcp-config.test.ts
+     Result: 9 pass, 0 fail, 15 expect() calls
+     Time: 26.00ms
+
+   ✓ bun test (full suite)
+     Result: 93 pass, 0 fail, 163 expect() calls
+     Time: 4.01s
+     Previous: 84 pass, 0 fail
+     New tests added: 9 (84 + 9 = 93) ✓
+
+   ✓ bunx tsc --noEmit
+     Result: No errors (clean TypeScript compilation)
+
+3. IMPLEMENTATION DETAILS
+   - Default port: 37777 (matches client.ts convention)
+   - MCP endpoint: http://localhost:{port}/mcp
+   - Config format: opencode.json-compatible
+   - Instructions include: JSON snippet, port info, available tools list
+   - No external dependencies added
+   - No console.log in production code
+   - No mock.module() used in tests
+
+4. TEST COVERAGE
+   generateMcpConfig tests:
+   ✓ returns object with claude-mem key
+   ✓ returns URL with default port 37777
+   ✓ returns URL with custom port
+   ✓ sets type to remote
+
+   generateInstallInstructions tests:
+   ✓ returns string containing opencode.json
+   ✓ contains the JSON config snippet
+   ✓ uses default port in output
+   ✓ uses custom port in output
+   ✓ includes available MCP tools list
+
+5. VERIFICATION CHECKLIST
+   ✓ src/mcp-config.ts created with both exports
+   ✓ src/mcp-config.test.ts created with 4+ tests
+   ✓ bun test src/mcp-config.test.ts passes (9/9)
+   ✓ bun test (full suite) passes (93/93, was 84)
+   ✓ bunx tsc --noEmit passes (no errors)
+   ✓ No existing files modified
+   ✓ No external dependencies added
+   ✓ No console.log in production code
+   ✓ Proper .js extension used in imports
+
+TASK COMPLETE
+=============
+All requirements met. Ready for orchestrator verification.
