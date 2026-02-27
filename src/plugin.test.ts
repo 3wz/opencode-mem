@@ -142,8 +142,11 @@ describe("OpenCodeMem plugin", () => {
     expect("tool.execute.after" in hooks).toBe(true);
     expect("experimental.chat.system.transform" in hooks).toBe(true);
     expect("experimental.session.compacting" in hooks).toBe(true);
+    expect("command.execute.before" in hooks).toBe(true);
+    expect("experimental.text.complete" in hooks).toBe(true);
     expect(typeof hooks.event).toBe("function");
   });
+
 
   it("event handler dispatches session.idle to summary", async () => {
     detectInstalled = true;

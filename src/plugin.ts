@@ -4,6 +4,8 @@ import { createCompactionHook } from "./hooks/compaction.js";
 import { createContextInjectionHook } from "./hooks/context-inject.js";
 import { createCapturePromptHook } from "./hooks/capture-prompt.js";
 import { createSaveObservationHook } from "./hooks/save-observation.js";
+import { createCommandExecuteHook } from "./hooks/command-execute.js";
+import { createTextCompleteHook } from "./hooks/text-complete.js";
 import { createSummaryHandler } from "./hooks/summary.js";
 import { detectClaudeMem, getWorkerPort } from "./utils/detect.js";
 import { autoSetup } from "./setup/auto-setup.js";
@@ -59,8 +61,11 @@ function buildHooks(
       memClient,
       projectName,
     ) as PluginHooks["experimental.session.compacting"],
+    "command.execute.before": createCommandExecuteHook(memClient, state) as PluginHooks["command.execute.before"],
+    "experimental.text.complete": createTextCompleteHook(memClient, state) as PluginHooks["experimental.text.complete"],
   };
 }
+
 
 /**
  * OpenCodeMem - opencode plugin for claude-mem persistent memory.
