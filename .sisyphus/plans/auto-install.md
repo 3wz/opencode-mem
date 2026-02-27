@@ -352,7 +352,7 @@ Max Concurrent: 4 (Wave 2)
   - Files: `src/setup/steps/detect-binary.ts`, `src/setup/steps/detect-binary.test.ts`
   - Pre-commit: `bun test src/setup/ && bunx tsc --noEmit`
 
-- [ ] 3. Install Claude-Mem Step
+- [x] 3. Install Claude-Mem Step
 
   **What to do**:
   - Create `src/setup/steps/install-claude-mem.ts` with function:
@@ -417,7 +417,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add install, configure, copy steps and fix MCP config`
   - Pre-commit: `bun test src/setup/ && bunx tsc --noEmit`
 
-- [ ] 4. Configure MCP Step
+- [x] 4. Configure MCP Step
 
   **What to do**:
   - Create `src/setup/steps/configure-mcp.ts` with function:
@@ -511,7 +511,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add install, configure, copy steps and fix MCP config`
   - Pre-commit: `bun test src/setup/ && bunx tsc --noEmit`
 
-- [ ] 5. Copy Skills Step
+- [x] 5. Copy Skills Step
 
   **What to do**:
   - Create `src/setup/steps/copy-skills.ts` with function:
@@ -586,7 +586,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add install, configure, copy steps and fix MCP config`
   - Pre-commit: `bun test src/setup/ && bunx tsc --noEmit`
 
-- [ ] 6. Fix generateMcpConfig to Include `enabled: true`
+- [x] 6. Fix generateMcpConfig to Include `enabled: true`
 
   **What to do**:
   - Update `src/mcp-config.ts` `McpConfig` interface to add `enabled?: boolean`
@@ -642,7 +642,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add install, configure, copy steps and fix MCP config`
   - Pre-commit: `bun test && bunx tsc --noEmit`
 
-- [ ] 7. Auto-Setup Orchestrator
+- [x] 7. Auto-Setup Orchestrator
 
   **What to do**:
   - Create `src/setup/auto-setup.ts` with the main orchestrator function:
@@ -737,7 +737,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add orchestrator and integrate into plugin`
   - Pre-commit: `bun test && bunx tsc --noEmit`
 
-- [ ] 8. Integrate Auto-Setup into Plugin
+- [x] 8. Integrate Auto-Setup into Plugin
 
   **What to do**:
   - Modify `src/plugin.ts` to call `autoSetup()` during plugin init
@@ -831,7 +831,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add orchestrator and integrate into plugin`
   - Pre-commit: `bun test && bunx tsc --noEmit`
 
-- [ ] 9. Update README with Auto-Setup Documentation
+- [x] 9. Update README with Auto-Setup Documentation
 
   **What to do**:
   - Update `README.md` to document the auto-setup feature
@@ -892,7 +892,7 @@ Max Concurrent: 4 (Wave 2)
   - Message: `feat(setup): add orchestrator and integrate into plugin`
   - Pre-commit: `bun test && bunx tsc --noEmit`
 
-- [ ] 10. Full Regression Test Run
+- [x] 10. Full Regression Test Run
 
   **What to do**:
   - Run the complete test suite: `bun test`
@@ -948,15 +948,15 @@ Max Concurrent: 4 (Wave 2)
 
 > 3 review agents run in PARALLEL. ALL must APPROVE. Rejection → fix → re-run.
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   Read the plan end-to-end. For each "Must Have": verify implementation exists (read file, run command). For each "Must NOT Have": search codebase for forbidden patterns — reject with file:line if found. Check evidence files exist in `.sisyphus/evidence/`. Compare deliverables against plan.
   Output: `Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
   Run `bunx tsc --noEmit` + `bun test`. Review all changed files for: `as any`/`@ts-ignore`, empty catches without comments, console.log in prod, commented-out code, unused imports. Check AI slop: excessive comments, over-abstraction, generic names.
   Output: `Build [PASS/FAIL] | Tests [N pass/N fail] | Files [N clean/N issues] | VERDICT`
 
-- [ ] F3. **Scope Fidelity Check** — `deep`
+- [x] F3. **Scope Fidelity Check** — `deep`
   For each task: read "What to do", read actual diff (git log/diff). Verify 1:1 — everything in spec was built (no missing), nothing beyond spec was built (no creep). Check "Must NOT do" compliance. Flag unaccounted changes.
   Output: `Tasks [N/N compliant] | Unaccounted [CLEAN/N files] | VERDICT`
 

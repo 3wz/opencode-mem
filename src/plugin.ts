@@ -14,13 +14,13 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
   const port = getWorkerPort();
   const projectName = (project as { path?: string }).path ?? directory;
 
-  const log = (msg: string) => {
+  const log = (msg: string, level: "info" | "warn" | "error" = "info") => {
     try {
       client.app.log({
         body: {
           service: "opencode-mem",
           message: `[opencode-mem] ${msg}`,
-          level: "info",
+          level,
         },
       });
     } catch {
@@ -98,13 +98,13 @@ export function createPluginWithDependencies(
     const port = (getPortFn || getWorkerPort)();
     const projectName = (project as { path?: string }).path ?? directory;
 
-    const log = (msg: string) => {
+    const log = (msg: string, level: "info" | "warn" | "error" = "info") => {
       try {
         client.app.log({
           body: {
             service: "opencode-mem",
             message: `[opencode-mem] ${msg}`,
-            level: "info",
+            level,
           },
         });
       } catch {

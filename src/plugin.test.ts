@@ -9,7 +9,7 @@ let detectPort = 37777;
 
 // Mock ClaudeMemClient class
 class MockClaudeMemClient {
-  constructor(_port?: number, _timeout?: number, _log?: (msg: string) => void) {}
+  constructor(_port?: number, _timeout?: number, _log?: (msg: string, level?: "info" | "warn" | "error") => void) {}
 
   async initSession(payload: unknown): Promise<void> {
     await mockInitSession(payload);
