@@ -1,0 +1,36 @@
+import type { ClaudeMemClient } from "../client.js";
+import type { PluginState } from "../types.js";
+import { stripMemoryTagsFromText } from "../utils/strip-tags.js";
+
+const MAX_OUTPUT_BYTES = 100 * 1024;
+
+export function createTextCompleteHook(
+  memClient: ClaudeMemClient,
+  state: PluginState,
+) {
+  void state;
+
+  return async (
+    input: { sessionID: string; messageID: string; partID: string },
+    output: { text: string },
+  ): Promise<void> => {
+    if (!input.sessionID) return;
+    if (!output.text?.trim()) return;
+
+    // MUST NOT mutate output.text — copy first
+    let cleanText = stripMemoryTagsFromText(output.text);
+    if (cleanText.length > MAX_OUTPUT_BYTES) {
+      cleanText = cleanText.slice(0, MAX_OUTPUT_BYTES) + "[truncated]";
+    }
+
+    void memClient.sendObservation({
+      claudeSessionId: input.sessionID,
+      toolName: "assistant_response",
+      toolInput: JSON.stringify({
+        messageID: input.messageID,
+        partID: input.partID,
+      }),
+      toolResult: cleanText,
+    });
+  };
+}
