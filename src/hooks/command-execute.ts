@@ -2,6 +2,15 @@ import type { ClaudeMemClient } from "../client.js";
 import type { PluginState } from "../types.js";
 import { stripMemoryTagsFromJson } from "../utils/strip-tags.js";
 
+function safeParseJson(jsonStr: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return typeof parsed === 'object' && parsed !== null ? parsed : { raw: jsonStr };
+  } catch {
+    return { raw: jsonStr };
+  }
+}
+
 export function createCommandExecuteHook(
   memClient: ClaudeMemClient,
   state: PluginState,
@@ -15,10 +24,10 @@ export function createCommandExecuteHook(
     if (!input.sessionID || !input.command) return;
 
     void memClient.sendObservation({
-      claudeSessionId: input.sessionID,
-      toolName: `command:${input.command}`,
-      toolInput: stripMemoryTagsFromJson(JSON.stringify(input.arguments ?? {})),
-      toolResult: `Slash command executed: /${input.command}`,
+      contentSessionId: input.sessionID,
+      tool_name: `command:${input.command}`,
+      tool_input: safeParseJson(stripMemoryTagsFromJson(JSON.stringify(input.arguments ?? {}))),
+      tool_response: `Slash command executed: /${input.command}`,
     });
   };
 }

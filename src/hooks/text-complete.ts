@@ -24,13 +24,13 @@ export function createTextCompleteHook(
     }
 
     void memClient.sendObservation({
-      claudeSessionId: input.sessionID,
-      toolName: "assistant_response",
-      toolInput: JSON.stringify({
+      contentSessionId: input.sessionID,
+      tool_name: "assistant_response",
+      tool_input: {
         messageID: input.messageID,
         partID: input.partID,
-      }),
-      toolResult: cleanText,
+      },
+      tool_response: cleanText,
     });
   };
 }

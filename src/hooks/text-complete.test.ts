@@ -46,11 +46,13 @@ describe("createTextCompleteHook", () => {
 
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as {
-      toolName?: string;
-      toolResult?: string;
+      tool_name?: string;
+      tool_input?: { messageID: string; partID: string };
+      tool_response?: string;
     } | null;
-    expect(body?.toolName).toBe("assistant_response");
-    expect(body?.toolResult).toContain("This is the assistant response");
+    expect(body?.tool_name).toBe("assistant_response");
+    expect(body?.tool_response).toContain("This is the assistant response");
+    expect(body?.tool_input).toEqual({ messageID: "msg_1", partID: "part_1" });
   });
 
   it("does NOT mutate output.text", async () => {
@@ -120,8 +122,8 @@ describe("createTextCompleteHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { toolResult?: string } | null;
-    const result = body?.toolResult ?? "";
+    const body = receivedBody as { tool_response?: string } | null;
+    const result = body?.tool_response ?? "";
     expect(result.length).toBeLessThanOrEqual(100 * 1024 + "[truncated]".length);
   });
 
@@ -139,9 +141,9 @@ describe("createTextCompleteHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { toolResult?: string } | null;
-    expect(body?.toolResult).not.toContain("<private>");
-    expect(body?.toolResult).toContain("Hello");
-    expect(body?.toolResult).toContain("world");
+    const body = receivedBody as { tool_response?: string } | null;
+    expect(body?.tool_response).not.toContain("<private>");
+    expect(body?.tool_response).toContain("Hello");
+    expect(body?.tool_response).toContain("world");
   });
 });

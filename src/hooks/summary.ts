@@ -13,8 +13,8 @@ export function createSummaryHandler(
     if (!state.isWorkerRunning) return;
 
     void memClient.sendSummary({
-      claudeSessionId: sessionId,
-      projectName: state.projectName,
+      contentSessionId: sessionId,
+      last_assistant_message: "",
     });
   };
 }

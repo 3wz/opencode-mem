@@ -31,8 +31,8 @@ function buildHooks(
 
         if (state.isWorkerRunning && sessionId) {
           void memClient.initSession({
-            claudeSessionId: sessionId,
-            projectName,
+            contentSessionId: sessionId,
+            project: projectName,
           });
         }
       }
@@ -42,8 +42,7 @@ function buildHooks(
 
         if (state.isWorkerRunning && sessionId) {
           void memClient.completeSession({
-            claudeSessionId: sessionId,
-            projectName,
+            contentSessionId: sessionId,
           });
         }
       }

@@ -5,6 +5,15 @@ import { stripMemoryTagsFromJson, stripMemoryTagsFromText } from "../utils/strip
 
 const MAX_OUTPUT_BYTES = 100 * 1024;
 
+function safeParseJson(jsonStr: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return typeof parsed === 'object' && parsed !== null ? parsed : { raw: jsonStr };
+  } catch {
+    return { raw: jsonStr };
+  }
+}
+
 export function createSaveObservationHook(
   memClient: ClaudeMemClient,
   state: PluginState,
@@ -33,10 +42,10 @@ export function createSaveObservationHook(
     const cleanOutput = stripMemoryTagsFromText(toolOutput);
 
     void memClient.sendObservation({
-      claudeSessionId: input.sessionID,
-      toolName: input.tool,
-      toolInput: cleanInput,
-      toolResult: cleanOutput,
+      contentSessionId: input.sessionID,
+      tool_name: input.tool,
+      tool_input: safeParseJson(cleanInput),
+      tool_response: cleanOutput,
       cwd: cwd || undefined,
     });
   };

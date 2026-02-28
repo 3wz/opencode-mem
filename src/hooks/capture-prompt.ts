@@ -51,9 +51,9 @@ export function createCapturePromptHook(
     }
 
     void memClient.initSession({
-      claudeSessionId: input.sessionID,
-      projectName: state.projectName,
-      initialPrompt: cleanText,
+      contentSessionId: input.sessionID,
+      project: state.projectName,
+      prompt: cleanText,
     });
   };
 }

@@ -45,8 +45,9 @@ describe("createCommandExecuteHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { toolName?: string } | null;
-    expect(body?.toolName).toBe("command:test-cmd");
+    const body = receivedBody as { tool_name?: string } | null;
+    expect(body?.tool_name).toBe("command:test-cmd");
+
   });
 
   it("skips when sessionID is empty", async () => {
@@ -101,8 +102,11 @@ describe("createCommandExecuteHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { toolInput?: string } | null;
-    expect(body?.toolInput).not.toContain("<private>");
-    expect(body?.toolInput).toContain("visible");
+    const body = receivedBody as { tool_input?: Record<string, unknown> } | null;
+    expect(body?.tool_input).toBeDefined();
+    expect(typeof body?.tool_input).toBe('object');
+    expect(body?.tool_input?.public).toBe('visible');
+    expect(JSON.stringify(body?.tool_input)).not.toContain("<private>");
+
   });
 });

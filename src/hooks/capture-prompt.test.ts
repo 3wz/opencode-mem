@@ -45,8 +45,8 @@ describe("createCapturePromptHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { initialPrompt?: string } | null;
-    expect(body?.initialPrompt).toContain("hello world");
+    const body = receivedBody as { prompt?: string } | null;
+    expect(body?.prompt).toContain("hello world");
   });
 
   it("strips privacy tags from prompt", async () => {
@@ -62,9 +62,9 @@ describe("createCapturePromptHook", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const body = receivedBody as { initialPrompt?: string } | null;
-    expect(body?.initialPrompt).not.toContain("<private>");
-    expect(body?.initialPrompt).toContain("hello");
+    const body = receivedBody as { prompt?: string } | null;
+    expect(body?.prompt).not.toContain("<private>");
+    expect(body?.prompt).toContain("hello");
   });
 
   it("skips fully private prompts (empty after stripping)", async () => {
@@ -115,8 +115,8 @@ describe("createCapturePromptHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { initialPrompt?: string } | null;
-    expect(body?.initialPrompt).toContain("array content");
+    const body = receivedBody as { prompt?: string } | null;
+    expect(body?.prompt).toContain("array content");
   });
 
   it("falls back to message.text when content is missing", async () => {
@@ -133,7 +133,7 @@ describe("createCapturePromptHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
-    const body = receivedBody as { initialPrompt?: string } | null;
-    expect(body?.initialPrompt).toContain("fallback text");
+    const body = receivedBody as { prompt?: string } | null;
+    expect(body?.prompt).toContain("fallback text");
   });
 });

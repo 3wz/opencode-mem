@@ -164,8 +164,8 @@ describe("OpenCodeMem plugin", () => {
 
     expect(mockSendSummary).toHaveBeenCalledTimes(1);
     expect(mockSendSummary).toHaveBeenCalledWith({
-      claudeSessionId: "sess_idle_123",
-      projectName: "/test/project",
+      contentSessionId: "sess_idle_123",
+      last_assistant_message: "",
     });
   });
 
@@ -185,8 +185,8 @@ describe("OpenCodeMem plugin", () => {
 
     expect(mockInitSession).toHaveBeenCalledTimes(1);
     expect(mockInitSession).toHaveBeenCalledWith({
-      claudeSessionId: "sess_test123",
-      projectName: "/test/project",
+      contentSessionId: "sess_test123",
+      project: "/test/project",
     });
   });
 
@@ -206,8 +206,7 @@ describe("OpenCodeMem plugin", () => {
 
     expect(mockCompleteSession).toHaveBeenCalledTimes(1);
     expect(mockCompleteSession).toHaveBeenCalledWith({
-      claudeSessionId: "sess_test123",
-      projectName: "/test/project",
+      contentSessionId: "sess_test123",
     });
   });
 
@@ -262,8 +261,8 @@ describe("OpenCodeMem plugin", () => {
     await hooks.event!(createSessionEvent("session.created") as any);
 
     expect(mockInitSession).toHaveBeenCalledWith({
-      claudeSessionId: "sess_test123",
-      projectName: "/test/project",
+      contentSessionId: "sess_test123",
+      project: "/test/project",
     });
   });
 

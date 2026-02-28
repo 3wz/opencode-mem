@@ -45,10 +45,10 @@ describe("createSaveObservationHook", () => {
 
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as any;
-    expect(body?.toolName).toBe("bash");
-    expect(body?.claudeSessionId).toBe("sess_1");
-    expect(body?.toolInput).toContain('"command":"ls"');
-    expect(body?.toolResult).toBe("file.ts\nother.ts");
+    expect(body?.tool_name).toBe("bash");
+    expect(body?.contentSessionId).toBe("sess_1");
+    expect(body?.tool_input).toEqual({ command: "ls" });
+    expect(body?.tool_response).toBe("file.ts\nother.ts");
   });
 
   it("strips privacy tags from tool input", async () => {
@@ -71,8 +71,9 @@ describe("createSaveObservationHook", () => {
 
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as any;
-    expect(body?.toolInput).not.toContain("<private>");
-    expect(body?.toolInput).not.toContain("secret");
+    const toolInputStr = JSON.stringify(body?.tool_input);
+    expect(toolInputStr).not.toContain("<private>");
+    expect(toolInputStr).not.toContain("secret");
   });
 
   it("skips tools in skip list (TodoWrite)", async () => {
@@ -121,8 +122,8 @@ describe("createSaveObservationHook", () => {
 
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as any;
-    expect(body?.toolResult?.length).toBeLessThan(110 * 1024);
-    expect(body?.toolResult).toContain("[truncated]");
+    expect(body?.tool_response?.length).toBeLessThan(110 * 1024);
+    expect(body?.tool_response).toContain("[truncated]");
   });
 
   it("passes cwd in payload", async () => {

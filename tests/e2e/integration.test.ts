@@ -215,7 +215,7 @@ describe("E2E integration", () => {
 
     await waitForFireAndForget();
 
-    expect(recordedRequests.some((req) => req.path === "/sessions/sess_e2e/init")).toBe(true);
+    expect(recordedRequests.some((req) => req.path === "/api/sessions/init")).toBe(true);
     expect(recordedRequests.some((req) => req.path === "/api/sessions/observations")).toBe(true);
     expect(recordedRequests.some((req) => req.path === "/api/sessions/summarize")).toBe(true);
     expect(recordedRequests.some((req) => req.path === "/api/sessions/complete")).toBe(true);
@@ -340,24 +340,24 @@ describe("E2E integration", () => {
       (req) => req.path === "/api/sessions/observations",
     );
     const initRequest = recordedRequests
-      .filter((req) => req.path === "/sessions/sess_private/init")
+      .filter((req) => req.path === "/api/sessions/init")
       .at(-1);
 
     expect(observationRequest).toBeDefined();
     const observationBody = observationRequest?.body as {
-      toolInput?: string;
-      toolResult?: string;
+      tool_input?: Record<string, unknown>;
+      tool_response?: string;
     };
-    expect(observationBody.toolInput).not.toContain("<private>");
-    expect(observationBody.toolInput).not.toContain("secret data");
-    expect(observationBody.toolResult).not.toContain("<private>");
-    expect(observationBody.toolResult).not.toContain("secret data");
+    expect(JSON.stringify(observationBody.tool_input)).not.toContain("<private>");
+    expect(JSON.stringify(observationBody.tool_input)).not.toContain("secret data");
+    expect(observationBody.tool_response).not.toContain("<private>");
+    expect(observationBody.tool_response).not.toContain("secret data");
 
     expect(initRequest).toBeDefined();
-    const initBody = initRequest?.body as { initialPrompt?: string };
-    expect(initBody.initialPrompt).not.toContain("<claude-mem-context>");
-    expect(initBody.initialPrompt).not.toContain("context");
-    expect(initBody.initialPrompt).toContain("hello");
-    expect(initBody.initialPrompt).toContain("world");
+    const initBody = initRequest?.body as { prompt?: string };
+    expect(initBody.prompt).not.toContain("<claude-mem-context>");
+    expect(initBody.prompt).not.toContain("context");
+    expect(initBody.prompt).toContain("hello");
+    expect(initBody.prompt).toContain("world");
   });
 });
