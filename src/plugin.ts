@@ -118,6 +118,8 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
       state.isWorkerRunning = true;
       log("Auto-setup started the worker. Memory features now active.");
     }
+  }).catch((err) => {
+    log(`Auto-setup failed: ${err}`, "error");
   });
 
   return buildHooks(memClient, state, projectName, port, directory);
@@ -177,6 +179,8 @@ export function createPluginWithDependencies(
         state.isWorkerRunning = true;
         log("Auto-setup started the worker. Memory features now active.");
       }
+    }).catch((err) => {
+      log(`Auto-setup failed: ${err}`, "error");
     });
 
     return buildHooks(memClient, state, projectName, port, directory);
