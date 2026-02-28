@@ -284,6 +284,28 @@ describe("OpenCodeMem plugin", () => {
     await expect(OpenCodeMem(input as any)).resolves.toBeDefined();
   });
 
+  it("completes init when client.app.log hangs (never resolves)", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      () => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    input.client.app.log = mock(() => new Promise(() => {})); // never resolves
+
+    // Must complete within 5 seconds (not hang)
+    const result = await Promise.race([
+      OpenCodeMem(input as any),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Plugin init timed out")), 5000)),
+    ]);
+
+    expect(result).toBeDefined();
+    expect(typeof (result as any).event).toBe("function");
+  });
+
   it("calls autoSetup when worker not running", async () => {
     detectInstalled = false;
     detectWorkerRunning = false;
