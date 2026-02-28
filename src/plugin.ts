@@ -76,7 +76,9 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
   const port = getWorkerPort();
   const projectName = (project as { path?: string }).path ?? directory;
 
+  let ready = false;
   const log = (msg: string, level: "info" | "warn" | "error" = "info") => {
+    if (!ready) return;
     try {
       client.app.log({
         body: {
@@ -122,6 +124,7 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
     log(`Auto-setup failed: ${err}`, "error");
   });
 
+  ready = true;
   return buildHooks(memClient, state, projectName, port, directory);
 };
 
@@ -136,7 +139,9 @@ export function createPluginWithDependencies(
     const port = (getPortFn || getWorkerPort)();
     const projectName = (project as { path?: string }).path ?? directory;
 
+    let ready = false;
     const log = (msg: string, level: "info" | "warn" | "error" = "info") => {
+      if (!ready) return;
       try {
         client.app.log({
           body: {
@@ -183,6 +188,7 @@ export function createPluginWithDependencies(
       log(`Auto-setup failed: ${err}`, "error");
     });
 
+    ready = true;
     return buildHooks(memClient, state, projectName, port, directory);
   };
 }
