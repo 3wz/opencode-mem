@@ -85,16 +85,16 @@ describe("ClaudeMemClient", () => {
     expect(lastRequest?.method).toBe("GET");
   });
 
-  it("initSession calls POST /sessions/{id}/init", async () => {
+  it("initSession calls POST /api/sessions/init", async () => {
     const client = new ClaudeMemClient(mockPort, 2000);
 
     await client.initSession({
-      claudeSessionId: "sess_123",
-      projectName: "test",
-      initialPrompt: "hello",
+      contentSessionId: "sess_123",
+      project: "test",
+      prompt: "hello",
     });
 
-    expect(lastRequest?.path).toBe("/sessions/sess_123/init");
+    expect(lastRequest?.path).toBe("/api/sessions/init");
     expect(lastRequest?.method).toBe("POST");
   });
 
@@ -102,10 +102,10 @@ describe("ClaudeMemClient", () => {
     const client = new ClaudeMemClient(mockPort, 2000);
 
     await client.sendObservation({
-      claudeSessionId: "sess_123",
-      toolName: "bash",
-      toolInput: "ls",
-      toolResult: "file.ts",
+      contentSessionId: "sess_123",
+      tool_name: "bash",
+      tool_input: { command: "ls" },
+      tool_response: "file.ts",
     });
 
     expect(lastRequest?.path).toBe("/api/sessions/observations");
@@ -115,7 +115,7 @@ describe("ClaudeMemClient", () => {
   it("sendSummary calls POST /api/sessions/summarize", async () => {
     const client = new ClaudeMemClient(mockPort, 2000);
 
-    await client.sendSummary({ claudeSessionId: "sess_123", projectName: "test" });
+    await client.sendSummary({ contentSessionId: "sess_123", last_assistant_message: "" });
 
     expect(lastRequest?.path).toBe("/api/sessions/summarize");
     expect(lastRequest?.method).toBe("POST");
@@ -124,7 +124,7 @@ describe("ClaudeMemClient", () => {
   it("completeSession calls POST /api/sessions/complete", async () => {
     const client = new ClaudeMemClient(mockPort, 2000);
 
-    await client.completeSession({ claudeSessionId: "sess_123", projectName: "test" });
+    await client.completeSession({ contentSessionId: "sess_123" });
 
     expect(lastRequest?.path).toBe("/api/sessions/complete");
     expect(lastRequest?.method).toBe("POST");
@@ -136,10 +136,10 @@ describe("ClaudeMemClient", () => {
 
     await expect(
       client.sendObservation({
-        claudeSessionId: "sess_123",
-        toolName: "bash",
-        toolInput: "ls",
-        toolResult: "file.ts",
+        contentSessionId: "sess_123",
+        tool_name: "bash",
+        tool_input: { command: "ls" },
+        tool_response: "file.ts",
       }),
     ).resolves.toBeUndefined();
   });
@@ -150,10 +150,10 @@ describe("ClaudeMemClient", () => {
     const start = Date.now();
 
     await client.sendObservation({
-      claudeSessionId: "sess_timeout",
-      toolName: "bash",
-      toolInput: "ls",
-      toolResult: "x",
+      contentSessionId: "sess_timeout",
+      tool_name: "bash",
+      tool_input: { command: "ls" },
+      tool_response: "x",
     });
 
     const elapsed = Date.now() - start;

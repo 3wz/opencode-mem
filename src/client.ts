@@ -52,7 +52,7 @@ export class ClaudeMemClient {
 
   /** Initialize a session. Fire-and-forget. */
   async initSession(payload: SessionInitPayload): Promise<void> {
-    await this.safePost(`/sessions/${encodeURIComponent(payload.claudeSessionId)}/init`, payload);
+    await this.safePost("/api/sessions/init", payload);
   }
 
   /** Send an observation. Fire-and-forget. */

@@ -18,32 +18,31 @@ export interface ContextInjectionResponse {
   projectName: string;
 }
 
-// POST body for POST /sessions/{id}/init
+// POST body for POST /api/sessions/init
 export interface SessionInitPayload {
-  claudeSessionId: string;
-  projectName: string;
-  initialPrompt?: string;
+  contentSessionId: string;
+  project: string;
+  prompt?: string;
 }
 
 // POST body for POST /api/sessions/observations
 export interface ObservationPayload {
-  claudeSessionId: string;
-  toolName: string;
-  toolInput: string;
-  toolResult: string;
+  contentSessionId: string;
+  tool_name: string;
+  tool_input: Record<string, unknown>;
+  tool_response: string;
   cwd?: string;
 }
 
 // POST body for POST /api/sessions/summarize
 export interface SummarizePayload {
-  claudeSessionId: string;
-  projectName: string;
+  contentSessionId: string;
+  last_assistant_message?: string;
 }
 
 // POST body for POST /api/sessions/complete
 export interface SessionCompletePayload {
-  claudeSessionId: string;
-  projectName: string;
+  contentSessionId: string;
 }
 
 // Internal plugin state
