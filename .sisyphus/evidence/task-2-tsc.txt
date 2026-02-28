@@ -1,0 +1,8 @@
+TypeScript type check for command-execute.ts and command-execute.test.ts:
+
+$ bunx tsc --noEmit src/hooks/command-execute.ts src/hooks/command-execute.test.ts
+
+Result: 0 errors
+Status: PASS
+
+All type definitions are correct and properly imported.

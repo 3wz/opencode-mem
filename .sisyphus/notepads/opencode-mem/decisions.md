@@ -21,3 +21,6 @@
 ### TDD approach
 - RED (failing test) → GREEN (minimal impl) → REFACTOR
 - Every task writes tests first
+
+- 2026-02-27: Kept summary handling inside event hook instead of adding a session.idle key, aligning with OpenCode hook model and existing summary factory filter.
+- 2026-02-27: Retained buildHooks typing via Plugin return-derived type with hook-specific casts to satisfy @opencode-ai/plugin hook signatures without modifying existing hook factories.

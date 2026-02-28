@@ -79,6 +79,15 @@ async function createIntegratedHooks(port: number, workerRunning: boolean): Prom
     sessionId: "",
   };
 
+  // Mock autoSetup to avoid making real requests during tests
+  const mockAutoSetup = async () => ({
+    binary: { status: "success" as const, message: "" },
+    install: { status: "skipped" as const, message: "" },
+    mcp: { status: "skipped" as const, message: "" },
+    skills: { status: "skipped" as const, message: "" },
+    worker: { status: workerRunning ? ("skipped" as const) : ("success" as const), message: "" },
+  });
+
   const plugin = createPluginWithDependencies(
     () => memClient,
     async () => ({
@@ -88,6 +97,7 @@ async function createIntegratedHooks(port: number, workerRunning: boolean): Prom
       dataDir: "/tmp/.claude-mem",
     }),
     () => port,
+    mockAutoSetup,
   );
 
   const baseHooks = await plugin(createMockInput() as any);

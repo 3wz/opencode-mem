@@ -110,16 +110,15 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
     log("Claude-mem not detected. Memory features disabled.");
   }
 
-  // Auto-setup: install/configure claude-mem if needed (fire-and-forget)
-  if (!detection.workerRunning) {
-    const setupDeps = createDefaultDeps(log);
-    void autoSetup(setupDeps).then((result) => {
-      if (result.worker.status === "success") {
-        state.isWorkerRunning = true;
-        log("Auto-setup started the worker. Memory features now active.");
-      }
-    });
-  }
+  // Auto-setup: always run MCP config/skills setup (idempotent, fire-and-forget).
+  // Worker start is skipped internally when already running.
+  const setupDeps = createDefaultDeps(log);
+  void autoSetup(setupDeps).then((result) => {
+    if (result.worker.status === "success" && !state.isWorkerRunning) {
+      state.isWorkerRunning = true;
+      log("Auto-setup started the worker. Memory features now active.");
+    }
+  });
 
   return buildHooks(memClient, state, projectName, port, directory);
 };
@@ -169,17 +168,16 @@ export function createPluginWithDependencies(
       log("Claude-mem not detected. Memory features disabled.");
     }
 
-    // Auto-setup: install/configure claude-mem if needed (fire-and-forget)
-    if (!detection.workerRunning) {
-      const setupDeps = createDefaultDeps(log);
-      const setupFn = autoSetupFn || autoSetup;
-      void setupFn(setupDeps).then((result) => {
-        if (result.worker.status === "success") {
-          state.isWorkerRunning = true;
-          log("Auto-setup started the worker. Memory features now active.");
-        }
-      });
-    }
+    // Auto-setup: always run MCP config/skills setup (idempotent, fire-and-forget).
+    // Worker start is skipped internally when already running.
+    const setupDeps = createDefaultDeps(log);
+    const setupFn = autoSetupFn || autoSetup;
+    void setupFn(setupDeps).then((result) => {
+      if (result.worker.status === "success" && !state.isWorkerRunning) {
+        state.isWorkerRunning = true;
+        log("Auto-setup started the worker. Memory features now active.");
+      }
+    });
 
     return buildHooks(memClient, state, projectName, port, directory);
   };

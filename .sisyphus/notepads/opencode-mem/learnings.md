@@ -239,3 +239,6 @@ skills/
 - Integration strategy: compose real hook factories with `createPluginWithDependencies` and a shared `Bun.serve` mock worker to validate cross-hook behavior in one flow.
 - Fire-and-forget hooks need a short delay (`await new Promise(resolve => setTimeout(resolve, 50))`) before asserting recorded HTTP calls.
 - Privacy stripping verified end-to-end for both `<private>` and `<claude-mem-context>` tags before payloads hit worker endpoints.
+
+- 2026-02-27: Wired all existing hook factories via shared buildHooks() in plugin.ts so OpenCode now exposes chat.message, tool.execute.after, experimental.chat.system.transform, and experimental.session.compacting hooks from a single source.
+- 2026-02-27: Summary dispatch is now composed into event hook; session.idle routes through createSummaryHandler while session.created/session.deleted lifecycle behavior remains unchanged.

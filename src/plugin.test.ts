@@ -315,7 +315,7 @@ describe("OpenCodeMem plugin", () => {
     expect(autoSetupCalled).toBe(true);
   });
 
-  it("does not call autoSetup when worker is running", async () => {
+  it("calls autoSetup even when worker is running (idempotent)", async () => {
     detectInstalled = true;
     detectWorkerRunning = true;
 
@@ -327,7 +327,7 @@ describe("OpenCodeMem plugin", () => {
         install: { status: "skipped" as const, message: "" },
         mcp: { status: "success" as const, message: "" },
         skills: { status: "success" as const, message: "" },
-        worker: { status: "success" as const, message: "" },
+        worker: { status: "skipped" as const, message: "" },
       };
     };
 
@@ -340,9 +340,10 @@ describe("OpenCodeMem plugin", () => {
     const input = createMockInput();
     const hooks = await OpenCodeMem(input as any);
 
-    // Wait a bit to ensure no async call happens
+    // Wait a bit for the fire-and-forget promise to settle
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(autoSetupCalled).toBe(false);
-  });
+    // autoSetup should be called (idempotent), but worker start is skipped
+    expect(autoSetupCalled).toBe(true);
+});
 });
