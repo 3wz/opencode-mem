@@ -1,4 +1,5 @@
 import type { Plugin } from "@opencode-ai/plugin";
+import { basename } from "path";
 import { ClaudeMemClient } from "./client.js";
 import { createCompactionHook } from "./hooks/compaction.js";
 import { createContextInjectionHook } from "./hooks/context-inject.js";
@@ -25,12 +26,13 @@ type PluginFactories = {
 };
 
 function resolveProjectName(project: unknown, directory: string): string {
-  if (typeof project !== "object" || project === null) {
-    return directory;
+  if (typeof project === "object" && project !== null) {
+    const worktree = (project as Record<string, unknown>).worktree;
+    if (typeof worktree === "string" && worktree.length > 0) {
+      return basename(worktree);
+    }
   }
-
-  const pathValue = (project as Record<string, unknown>).path;
-  return typeof pathValue === "string" && pathValue.length > 0 ? pathValue : directory;
+  return basename(directory);
 }
 
 function createLogger(client: any): { log: (msg: string, level?: LogLevel) => void; setReady: () => void } {

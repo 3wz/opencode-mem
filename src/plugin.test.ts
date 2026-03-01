@@ -60,7 +60,7 @@ const { createPluginWithDependencies } = await import("./plugin.js");
 
 type MockInput = {
   client: { app: { log: ReturnType<typeof mock> } };
-  project: { path?: string };
+  project: { worktree?: string };
   directory: string;
   worktree: string;
   serverUrl: URL;
@@ -74,7 +74,7 @@ function createMockInput(projectPath = "/test/project"): MockInput {
         log: mock(() => ({ data: null, error: null, response: new Response() })),
       },
     },
-    project: { path: projectPath },
+    project: { worktree: projectPath },
     directory: "/test/project",
     worktree: "/test/project",
     serverUrl: new URL("http://localhost:3000"),
