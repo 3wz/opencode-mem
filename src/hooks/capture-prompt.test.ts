@@ -31,6 +31,7 @@ const makeState = (): PluginState => ({
   promptNumber: 0,
   lastUserMessage: "",
   lastAssistantMessage: "",
+  summarySent: false,
 });
 
 describe("createCapturePromptHook", () => {
@@ -67,6 +68,8 @@ describe("createCapturePromptHook", () => {
       { sessionID: "sess_1" },
       { message: { content: "second prompt" }, parts: [] },
     );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(state.lastUserMessage).toBe("second prompt");
     expect(state.promptNumber).toBe(2);

@@ -30,6 +30,7 @@ const makeState = (): PluginState => ({
   promptNumber: 0,
   lastUserMessage: "",
   lastAssistantMessage: "",
+  summarySent: false,
 });
 
 describe("createSaveObservationHook", () => {

@@ -34,6 +34,7 @@ const makeState = (overrides?: Partial<PluginState>): PluginState => ({
   promptNumber: 0,
   lastUserMessage: "",
   lastAssistantMessage: "",
+  summarySent: false,
   ...overrides,
 });
 
@@ -81,5 +82,23 @@ describe("createSummaryHandler", () => {
     await expect(
       handler({ event: { type: "session.idle", properties: { sessionID: "sess_1" } } }),
     ).resolves.toBeUndefined();
+  });
+
+  it("does not send duplicate summarize on repeated session.idle events", async () => {
+    requestCount = 0;
+    lastBody = null;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState({ lastAssistantMessage: "assistant final" });
+    const handler = createSummaryHandler(client, state);
+    const event = { event: { type: "session.idle", properties: { sessionID: "sess_idle_dup" } } };
+    
+    // Call handler twice with the same event
+    await handler(event);
+    await new Promise((r) => setTimeout(r, 100));
+    await handler(event);
+    await new Promise((r) => setTimeout(r, 100));
+    
+    // Should only have sent one request
+    expect(requestCount).toBe(1);
   });
 });

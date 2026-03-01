@@ -80,6 +80,7 @@ async function createIntegratedHooks(port: number, workerRunning: boolean): Prom
     promptNumber: 0,
     lastUserMessage: "",
     lastAssistantMessage: "",
+    summarySent: false,
   };
 
   // Mock autoSetup to avoid making real requests during tests

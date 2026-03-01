@@ -47,6 +47,7 @@ export interface PluginState {
   promptNumber: number;
   lastUserMessage: string;
   lastAssistantMessage: string;
+  summarySent: boolean;
 }
 
 export interface OpenCodeMemOptions {

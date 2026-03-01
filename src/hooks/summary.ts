@@ -11,10 +11,12 @@ export function createSummaryHandler(
     const sessionId = input.event.properties?.sessionID ?? state.sessionId;
     if (!sessionId) return;
     if (!state.isWorkerRunning) return;
+    if (state.summarySent) return;
 
     void memClient.sendSummary({
       contentSessionId: sessionId,
       last_assistant_message: state.lastAssistantMessage || undefined,
     });
+    state.summarySent = true;
   };
 }

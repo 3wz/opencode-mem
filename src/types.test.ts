@@ -30,6 +30,7 @@ describe("types", () => {
       promptNumber: 0,
       lastUserMessage: "",
       lastAssistantMessage: "",
+      summarySent: false,
     };
     expect(state.isWorkerRunning).toBe(false);
   });

@@ -74,6 +74,7 @@ function buildHooks(
       if (event.type === "session.created") {
         const sessionId = event.properties.info.id;
         state.sessionId = sessionId;
+        state.summarySent = false;
 
         if (state.isWorkerRunning && sessionId) {
           void memClient.initSession({
@@ -202,6 +203,7 @@ async function initializePlugin(
     promptNumber: 0,
     lastUserMessage: "",
     lastAssistantMessage: "",
+    summarySent: false,
   };
 
   const detection = await factories.detectFn();
