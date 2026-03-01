@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
@@ -67,4 +67,63 @@ export async function detectClaudeMem(): Promise<ClaudeMemDetectResult> {
   const workerRunning = await client.healthCheck(1);
 
   return { installed, workerRunning, port, dataDir };
+}
+
+/** Get the path to mcp-server.cjs from claude-mem installation */
+export function getMcpServerPath(): string | null {
+  try {
+    // Strategy 1: Check ~/.claude/plugins/cache/thedotmack/claude-mem/*/scripts/mcp-server.cjs
+    const cacheDir = join(homedir(), ".claude", "plugins", "cache", "thedotmack", "claude-mem");
+    if (existsSync(cacheDir)) {
+      const dirs = readdirSync(cacheDir);
+      if (dirs.length > 0) {
+        // Sort versions descending (newest first)
+        const versions = dirs.sort((a, b) => {
+          const aParts = a.split(".").map(Number);
+          const bParts = b.split(".").map(Number);
+          const aMaj = aParts[0] ?? 0;
+          const aMin = aParts[1] ?? 0;
+          const aPatch = aParts[2] ?? 0;
+          const bMaj = bParts[0] ?? 0;
+          const bMin = bParts[1] ?? 0;
+          const bPatch = bParts[2] ?? 0;
+          return bMaj - aMaj || bMin - aMin || bPatch - aPatch;
+        });
+        const latestVersion = versions[0];
+        const mcpPath = join(cacheDir, latestVersion, "scripts", "mcp-server.cjs");
+        if (existsSync(mcpPath)) {
+          return mcpPath;
+        }
+      }
+    }
+
+    // Strategy 2: Check npm global root
+    try {
+      const result = Bun.spawnSync(["npm", "root", "-g"], { stdout: "pipe" });
+      const npmRoot = result.stdout?.toString().trim();
+      if (npmRoot && npmRoot.length > 0) {
+        const npmPath = join(npmRoot, "claude-mem", "scripts", "mcp-server.cjs");
+        if (existsSync(npmPath)) {
+          return npmPath;
+        }
+      }
+    } catch {
+      // npm root failed, continue to next strategy
+    }
+
+    // Strategy 3: Check Bun.which("claude-mem")
+    const claudeMemBin = Bun.which("claude-mem");
+    if (claudeMemBin) {
+      // Resolve to package root by going up from bin
+      const packageRoot = join(claudeMemBin, "..", "..");
+      const bunPath = join(packageRoot, "scripts", "mcp-server.cjs");
+      if (existsSync(bunPath)) {
+        return bunPath;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }

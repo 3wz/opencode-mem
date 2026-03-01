@@ -2,6 +2,7 @@ import type { SetupDeps, SetupResult, SetupStepResult } from "./types.js";
 import { detectBinary as detectBinaryDefault } from "./steps/detect-binary.js";
 import { installClaudeMem as installClaudeMemDefault } from "./steps/install-claude-mem.js";
 import { configureMcp as configureMcpDefault } from "./steps/configure-mcp.js";
+import { configureCommands as configureCommandsDefault } from "./steps/configure-commands.js";
 import { copySkills as copySkillsDefault } from "./steps/copy-skills.js";
 import { startWorker as startWorkerFallback } from "../worker-manager.js";
 
@@ -10,6 +11,7 @@ export interface AutoSetupSteps {
   installClaudeMem: (deps: SetupDeps) => Promise<SetupStepResult>;
   configureMcp: (deps: SetupDeps) => Promise<SetupStepResult>;
   copySkills: (deps: SetupDeps) => Promise<SetupStepResult>;
+  configureCommands: (deps: SetupDeps) => Promise<SetupStepResult>;
 }
 
 const defaultSteps: AutoSetupSteps = {
@@ -17,6 +19,7 @@ const defaultSteps: AutoSetupSteps = {
   installClaudeMem: installClaudeMemDefault,
   configureMcp: configureMcpDefault,
   copySkills: copySkillsDefault,
+  configureCommands: configureCommandsDefault,
 };
 
 async function runStep(
@@ -50,6 +53,8 @@ export async function autoSetup(
 
     const mcp = await runStep("configureMcp", () => steps.configureMcp(deps), deps);
 
+    const commands = await runStep("configureCommands", () => steps.configureCommands(deps), deps);
+
     const skills = await runStep("copySkills", () => steps.copySkills(deps), deps);
 
     const worker = await runStep("startWorker", async () => {
@@ -61,17 +66,17 @@ export async function autoSetup(
         : { status: "failed" as const, message: `Worker failed to start on port ${port}` };
     }, deps);
 
-    const allResults = [binary, install, mcp, skills, worker];
+    const allResults = [binary, install, mcp, commands, skills, worker];
     const succeeded = allResults.filter((r) => r.status === "success").length;
     const skipped = allResults.filter((r) => r.status === "skipped").length;
     const failed = allResults.filter((r) => r.status === "failed").length;
     deps.log(`Setup complete: ${succeeded} succeeded, ${skipped} skipped, ${failed} failed`, "info");
 
-    return { binary, install, mcp, skills, worker };
+    return { binary, install, mcp, commands, skills, worker };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     deps.log(`Setup failed catastrophically: ${message}`, "error");
     const fail: SetupStepResult = { status: "failed", message };
-    return { binary: fail, install: fail, mcp: fail, skills: fail, worker: fail };
+    return { binary: fail, install: fail, mcp: fail, commands: fail, skills: fail, worker: fail };
   }
 }

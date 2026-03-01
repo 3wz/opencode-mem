@@ -59,3 +59,10 @@ export interface OpenCodeMemOptions {
   autoStart?: boolean;
   timeout?: number;
 }
+
+// Memory status for system prompt display
+export interface MemoryStatus {
+  connected: boolean;
+  version?: string;
+  workerUrl: string;
+}

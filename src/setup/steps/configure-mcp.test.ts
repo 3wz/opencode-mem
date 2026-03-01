@@ -1,6 +1,15 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, mock } from "bun:test";
 import { configureMcp } from "./configure-mcp.js";
 import type { SetupDeps } from "../types.js";
+
+// Mock the detect module BEFORE importing configure-mcp
+mock.module("../../utils/detect.js", () => ({
+  getMcpServerPath: () => "/fake/mcp-server.cjs",
+  getWorkerPort: () => 37777,
+  readSettings: () => ({ port: 37777, dataDir: "/fake" }),
+  getDataDir: () => "/fake",
+  detectClaudeMem: async () => ({ installed: true, workerRunning: true, port: 37777, dataDir: "/fake" }),
+}));
 
 /**
  * Create a mock SetupDeps with a pre-loaded opencode.json config.
@@ -26,7 +35,7 @@ function createMockConfig(config: Record<string, unknown>) {
 }
 
 describe("configureMcp", () => {
-  it("skips when claude-mem MCP already configured", async () => {
+  it("migrates remote MCP to local when type is remote", async () => {
     const { deps, getWritten } = createMockConfig({
       mcp: {
         "claude-mem": {
@@ -39,12 +48,17 @@ describe("configureMcp", () => {
 
     const result = await configureMcp(deps);
 
-    expect(result.status).toBe("skipped");
-    expect(result.message).toContain("already configured");
-    expect(getWritten()).toBeNull();
+    expect(result.status).toBe("success");
+    expect(result.message).toContain("migrated from remote to local");
+    const parsed = JSON.parse(getWritten()!);
+    expect(parsed.mcp["claude-mem"]).toEqual({
+      type: "local",
+      command: ["/fake/mcp-server.cjs"],
+      enabled: true,
+    });
   });
 
-  it("adds claude-mem MCP with correct port when missing", async () => {
+  it("adds claude-mem MCP with type local when missing", async () => {
     const { deps, getWritten } = createMockConfig({});
 
     const result = await configureMcp(deps);
@@ -52,22 +66,28 @@ describe("configureMcp", () => {
     expect(result.status).toBe("success");
     const parsed = JSON.parse(getWritten()!);
     expect(parsed.mcp["claude-mem"]).toEqual({
-      type: "remote",
-      url: "http://localhost:37777/mcp",
+      type: "local",
+      command: ["/fake/mcp-server.cjs"],
       enabled: true,
     });
   });
 
-  it("uses custom port from deps.getWorkerPort()", async () => {
-    const { deps, getWritten } = createMockConfig({});
-    // Override port
-    deps.getWorkerPort = () => 38888;
+  it("skips when claude-mem MCP already configured with type local", async () => {
+    const { deps, getWritten } = createMockConfig({
+      mcp: {
+        "claude-mem": {
+          type: "local",
+          command: ["/some/path/mcp-server.cjs"],
+          enabled: true,
+        },
+      },
+    });
 
     const result = await configureMcp(deps);
 
-    expect(result.status).toBe("success");
-    const parsed = JSON.parse(getWritten()!);
-    expect(parsed.mcp["claude-mem"].url).toBe("http://localhost:38888/mcp");
+    expect(result.status).toBe("skipped");
+    expect(result.message).toContain("already configured");
+    expect(getWritten()).toBeNull();
   });
 
   it("returns failed when opencode.json does not exist", async () => {
@@ -140,11 +160,29 @@ describe("configureMcp", () => {
       type: "remote",
       url: "http://localhost:8888/mcp",
     });
-    // New entry added
+    // New entry added with type: local
     expect(parsed.mcp["claude-mem"]).toEqual({
-      type: "remote",
-      url: "http://localhost:37777/mcp",
+      type: "local",
+      command: ["/fake/mcp-server.cjs"],
       enabled: true,
     });
+  });
+
+  it("returns failed when mcp-server.cjs path is null", async () => {
+    const { deps, getWritten } = createMockConfig({});
+    // Re-mock to return null for this test
+    mock.module("../../utils/detect.js", () => ({
+      getMcpServerPath: () => null,
+      getWorkerPort: () => 37777,
+      readSettings: () => ({ port: 37777, dataDir: "/fake" }),
+      getDataDir: () => "/fake",
+      detectClaudeMem: async () => ({ installed: true, workerRunning: true, port: 37777, dataDir: "/fake" }),
+    }));
+
+    const result = await configureMcp(deps);
+
+    expect(result.status).toBe("failed");
+    expect(result.message).toContain("mcp-server.cjs not found");
+    expect(getWritten()).toBeNull();
   });
 });

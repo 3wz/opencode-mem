@@ -3,54 +3,54 @@ import { generateMcpConfig, generateInstallInstructions } from "./mcp-config.js"
 
 describe("generateMcpConfig", () => {
   it("returns object with claude-mem key", () => {
-    const config = generateMcpConfig();
+    const config = generateMcpConfig("/path/to/mcp-server.cjs");
     expect(config).toHaveProperty("claude-mem");
     expect(config["claude-mem"].enabled).toBe(true);
   });
 
-  it("returns URL with default port 37777", () => {
-    const config = generateMcpConfig();
-    expect(config["claude-mem"].url).toBe("http://localhost:37777/mcp");
+  it("returns command array with provided path", () => {
+    const config = generateMcpConfig("/path/to/mcp-server.cjs");
+    expect(config["claude-mem"].command).toEqual(["/path/to/mcp-server.cjs"]);
   });
 
-  it("returns URL with custom port", () => {
-    const config = generateMcpConfig(38000);
-    expect(config["claude-mem"].url).toBe("http://localhost:38000/mcp");
+  it("returns command array with custom path", () => {
+    const config = generateMcpConfig("/custom/path/server.cjs");
+    expect(config["claude-mem"].command).toEqual(["/custom/path/server.cjs"]);
   });
 
-  it("sets type to remote", () => {
-    const config = generateMcpConfig();
-    expect(config["claude-mem"].type).toBe("remote");
+  it("sets type to local", () => {
+    const config = generateMcpConfig("/path/to/mcp-server.cjs");
+    expect(config["claude-mem"].type).toBe("local");
     expect(config["claude-mem"].enabled).toBe(true);
   });
 });
 
 describe("generateInstallInstructions", () => {
   it("returns string containing opencode.json", () => {
-    const instructions = generateInstallInstructions();
+    const instructions = generateInstallInstructions("/path/to/mcp-server.cjs");
     expect(instructions).toContain("opencode.json");
   });
 
-  it("contains the JSON config snippet", () => {
-    const instructions = generateInstallInstructions();
+  it("contains the JSON config snippet with local type", () => {
+    const instructions = generateInstallInstructions("/path/to/mcp-server.cjs");
     expect(instructions).toContain('"claude-mem"');
-    expect(instructions).toContain('"type": "remote"');
-    expect(instructions).toContain('"url"');
+    expect(instructions).toContain('"type": "local"');
+    expect(instructions).toContain('"command"');
   });
 
-  it("uses default port in output", () => {
+  it("uses provided path in output", () => {
+    const instructions = generateInstallInstructions("/path/to/mcp-server.cjs");
+    expect(instructions).toContain("/path/to/mcp-server.cjs");
+  });
+
+  it("uses default example path when not provided", () => {
     const instructions = generateInstallInstructions();
-    expect(instructions).toContain("37777");
-  });
-
-  it("uses custom port in output", () => {
-    const instructions = generateInstallInstructions(38000);
-    expect(instructions).toContain("38000");
-    expect(instructions).not.toContain("37777");
+    expect(instructions).toContain("/path/to/mcp-server.cjs");
+    expect(instructions).toContain('"type": "local"');
   });
 
   it("includes available MCP tools list", () => {
-    const instructions = generateInstallInstructions();
+    const instructions = generateInstallInstructions("/path/to/mcp-server.cjs");
     expect(instructions).toContain("search");
     expect(instructions).toContain("timeline");
     expect(instructions).toContain("get_observations");

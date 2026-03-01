@@ -73,7 +73,7 @@ opencode session
     |-- session.created .............. initSession
     |-- chat.message ................. capturePrompt
     |-- tool.execute.after ........... saveObservation
-    |-- system.transform ............. injectContext (memory -> system prompt)
+    |-- system.transform ............. injectContext (memory -> system prompt) + memoryStatus
     |-- session.compacting ........... injectCompactionContext
     |-- session.idle ................. sendSummary
     '-- session.deleted .............. completeSession
@@ -103,9 +103,9 @@ When the plugin loads for the first time, it runs a 5-step setup sequence. No ma
 | **Detect** | Checks if `claude-mem` is in PATH or `~/.claude-mem` exists | -- |
 | **Install** | Runs `npm install -g claude-mem` | Already installed |
 | **Configure MCP** | Adds `claude-mem` entry to `~/.config/opencode/opencode.json` | Entry already exists |
+| **Configure Commands** | Adds 4 slash commands to `~/.config/opencode/opencode.json` | Commands already exist |
 | **Copy Skills** | Copies `mem-search` skill to `~/.config/opencode/skills/` | Skill directory already exists |
 | **Start Worker** | Launches the claude-mem worker process | Worker already running |
-
 All steps are **idempotent** (safe to run multiple times) and **independent** (if one fails, the rest still run). Setup runs in the background and never blocks plugin initialization.
 
 ### What Gets Configured
@@ -113,6 +113,7 @@ All steps are **idempotent** (safe to run multiple times) and **independent** (i
 | File | Change |
 |------|--------|
 | `~/.config/opencode/opencode.json` | MCP entry added under `mcp.claude-mem` |
+| `~/.config/opencode/opencode.json` | 4 slash commands added under `commands` key |
 | `~/.config/opencode/skills/mem-search/` | Skill files copied from plugin package |
 
 ---
@@ -195,13 +196,15 @@ MCP is configured automatically. If you need to set it up manually:
 {
   "mcp": {
     "claude-mem": {
-      "type": "remote",
-      "url": "http://localhost:37777/mcp",
+      "type": "local",
+      "command": ["/path/to/mcp-server.cjs"],
       "enabled": true
     }
   }
 }
 ```
+
+The path to `mcp-server.cjs` is auto-configured during setup. Run the plugin once to configure automatically.
 
 ### Manual Skill Setup
 
@@ -211,6 +214,25 @@ The mem-search skill is copied automatically. To install manually:
 cp -r node_modules/@bloodf/opencode-claude-mem/skills/mem-search ~/.config/opencode/skills/
 ```
 
+## Memory Commands
+
+The plugin configures 4 slash commands in OpenCode automatically. Commands are auto-configured in `opencode.json` during setup.
+
+| Command | Description |
+|---------|-------------|
+| `/mem-search <query>` | Search persistent memory for past observations and context |
+| `/mem-save <text>` | Save a manual memory entry to the persistent store |
+| `/mem-status` | Show memory connection status and worker health |
+| `/mem-timeline` | Show recent memory timeline entries |
+
+### Usage Examples
+
+```
+/mem-search authentication bug from last week
+/mem-save Decided to use JWT with 24h expiry for auth tokens
+/mem-status
+/mem-timeline
+```
 ---
 
 ## Configuration

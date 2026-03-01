@@ -1,5 +1,6 @@
 import type {
   ClaudeMemConfig,
+  MemoryStatus,
   WorkerHealth,
   ContextInjectionResponse,
   SessionInitPayload,
@@ -68,6 +69,25 @@ export class ClaudeMemClient {
   /** Mark session complete. Fire-and-forget. */
   async completeSession(payload: SessionCompletePayload): Promise<void> {
     await this.safePost("/api/sessions/complete", payload);
+  }
+
+  /** Get memory system status (health check + version). Never throws. */
+  async getMemoryStatus(): Promise<MemoryStatus> {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 500);
+      const res = await fetch(`${this.baseUrl}/health`, { signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        const payload = (await res.json()) as WorkerHealth;
+        if (payload.status === "ok") {
+          return { connected: true, version: payload.version, workerUrl: this.baseUrl };
+        }
+      }
+      return { connected: false, workerUrl: this.baseUrl };
+    } catch {
+      return { connected: false, workerUrl: this.baseUrl };
+    }
   }
 
   private async safeGet<T>(path: string): Promise<T | null> {

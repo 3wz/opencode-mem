@@ -14,12 +14,14 @@ describe("SetupDeps types", () => {
       binary: { status: "success", message: "Binary installed" },
       install: { status: "success", message: "Installed" },
       mcp: { status: "success", message: "MCP ready" },
+      commands: { status: "success", message: "Commands configured" },
       skills: { status: "success", message: "Skills loaded" },
       worker: { status: "success", message: "Worker running" },
     };
     expect(result.binary.status).toBe("success");
     expect(result.install.status).toBe("success");
     expect(result.mcp.status).toBe("success");
+    expect(result.commands.status).toBe("success");
     expect(result.skills.status).toBe("success");
     expect(result.worker.status).toBe("success");
   });

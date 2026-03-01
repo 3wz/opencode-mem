@@ -171,3 +171,60 @@ describe("ClaudeMemClient", () => {
     expect(logs[0]).toContain("[claude-mem] GET /api/context/inject?project=demo failed:");
   });
 });
+
+describe("ClaudeMemClient.getMemoryStatus", () => {
+  it("returns connected:true with version when server responds ok", async () => {
+    mockResponse = { status: "ok", version: "1.0.0" };
+    mockStatus = 200;
+    const client = new ClaudeMemClient(mockPort, 2000);
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.connected).toBe(true);
+    expect(status.version).toBe("1.0.0");
+    expect(status.workerUrl).toBe(`http://localhost:${mockPort}`);
+  });
+
+  it("returns connected:false when server returns non-ok status", async () => {
+    mockResponse = { status: "error" };
+    mockStatus = 200;
+    const client = new ClaudeMemClient(mockPort, 2000);
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.connected).toBe(false);
+    expect(status.workerUrl).toBe(`http://localhost:${mockPort}`);
+  });
+
+  it("returns connected:false when server returns non-200 HTTP status", async () => {
+    mockResponse = { status: "ok" };
+    mockStatus = 500;
+    const client = new ClaudeMemClient(mockPort, 2000);
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.connected).toBe(false);
+    expect(status.workerUrl).toBe(`http://localhost:${mockPort}`);
+  });
+
+  it("returns connected:false on timeout without throwing", async () => {
+    mockDelay = 3000; // Exceeds the 500ms hardcoded timeout in getMemoryStatus
+    mockResponse = { status: "ok", version: "1.0.0" };
+    const client = new ClaudeMemClient(mockPort, 2000);
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.connected).toBe(false);
+    expect(status.workerUrl).toBe(`http://localhost:${mockPort}`);
+  });
+
+  it("never throws even when fetch throws (unreachable server)", async () => {
+    const client = new ClaudeMemClient(39999, 500); // No server on this port
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.connected).toBe(false);
+    expect(status.workerUrl).toBe("http://localhost:39999");
+    expect(status.version).toBeUndefined();
+  });
+});

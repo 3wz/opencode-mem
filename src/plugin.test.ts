@@ -5,6 +5,7 @@ const mockCompleteSession = mock(async (_payload: unknown) => {});
 const mockSendObservation = mock(async (_payload: unknown) => {});
 const mockSendSummary = mock(async (_payload: unknown) => {});
 const mockGetContext = mock(async (_projectName: string) => ({ context: null, projectName: "" }));
+const mockGetMemoryStatus = mock(async () => ({ connected: false, workerUrl: "http://localhost:37777" } as { connected: boolean; version?: string; workerUrl: string }));
 
 let detectInstalled = false;
 let detectWorkerRunning = false;
@@ -32,6 +33,10 @@ class MockClaudeMemClient {
 
   async getContext(projectName: string): Promise<{ context: string | null; projectName: string }> {
     return mockGetContext(projectName);
+  }
+
+  async getMemoryStatus(): Promise<{ connected: boolean; version?: string; workerUrl: string }> {
+    return mockGetMemoryStatus();
   }
 }
 
@@ -105,6 +110,7 @@ describe("OpenCodeMem plugin", () => {
     mockSendObservation.mockClear();
     mockSendSummary.mockClear();
     mockGetContext.mockClear();
+    mockGetMemoryStatus.mockClear();
   });
 
   it("is a function", async () => {
@@ -317,6 +323,7 @@ describe("OpenCodeMem plugin", () => {
         install: { status: "skipped" as const, message: "" },
         mcp: { status: "success" as const, message: "" },
         skills: { status: "success" as const, message: "" },
+        commands: { status: "success" as const, message: "" },
         worker: { status: "success" as const, message: "" },
       };
     };
@@ -348,6 +355,7 @@ describe("OpenCodeMem plugin", () => {
         install: { status: "skipped" as const, message: "" },
         mcp: { status: "success" as const, message: "" },
         skills: { status: "success" as const, message: "" },
+        commands: { status: "skipped" as const, message: "" },
         worker: { status: "skipped" as const, message: "" },
       };
     };
@@ -366,5 +374,84 @@ describe("OpenCodeMem plugin", () => {
 
     // autoSetup should be called (idempotent), but worker start is skipped
     expect(autoSetupCalled).toBe(true);
-});
+  });
+
+  describe("system.transform memory status", () => {
+    it("shows Active status when worker is connected", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      mockGetMemoryStatus.mockImplementation(async () => ({
+        connected: true,
+        version: "1.0.0",
+        workerUrl: "http://localhost:37777",
+      }));
+
+      const OpenCodeMem = createPluginWithDependencies(
+        () => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      const systemTransform = hooks["experimental.chat.system.transform"] as any;
+      const output = { system: [] as string[] };
+      await systemTransform({}, output);
+
+      expect(output.system.length).toBeGreaterThanOrEqual(1);
+      expect(output.system[0]).toContain("Claude-Mem Status");
+      expect(output.system[0]).toContain("Active");
+      expect(output.system[0]).toContain("1.0.0");
+    });
+
+    it("shows Disconnected status when worker is down", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      mockGetMemoryStatus.mockImplementation(async () => ({
+        connected: false,
+        workerUrl: "http://localhost:37777",
+      }));
+
+      const OpenCodeMem = createPluginWithDependencies(
+        () => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      const systemTransform = hooks["experimental.chat.system.transform"] as any;
+      const output = { system: [] as string[] };
+      await systemTransform({}, output);
+
+      expect(output.system.length).toBeGreaterThanOrEqual(1);
+      expect(output.system[0]).toContain("Claude-Mem Status");
+      expect(output.system[0]).toContain("Disconnected");
+    });
+
+    it("does not crash when getMemoryStatus throws", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      mockGetMemoryStatus.mockImplementation(async () => {
+        throw new Error("status fetch failed");
+      });
+
+      const OpenCodeMem = createPluginWithDependencies(
+        () => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      const systemTransform = hooks["experimental.chat.system.transform"] as any;
+      const output = { system: [] as string[] };
+
+      // Should not throw — status display is best-effort
+      await expect(systemTransform({}, output)).resolves.toBeUndefined();
+    });
+  });
 });

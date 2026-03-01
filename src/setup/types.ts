@@ -17,6 +17,7 @@ export interface SetupResult {
   binary: SetupStepResult;
   install: SetupStepResult;
   mcp: SetupStepResult;
+  commands: SetupStepResult;
   skills: SetupStepResult;
   worker: SetupStepResult;
 }

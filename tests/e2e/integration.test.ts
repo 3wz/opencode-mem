@@ -248,9 +248,10 @@ describe("E2E integration", () => {
   });
 
   it("returns valid MCP config and install instructions", () => {
-    const config = generateMcpConfig(37777);
-    expect(config["claude-mem"].type).toBe("remote");
-    expect(config["claude-mem"].url).toBe("http://localhost:37777/mcp");
+    const testPath = "/path/to/mcp-server.cjs";
+    const config = generateMcpConfig(testPath);
+    expect(config["claude-mem"].type).toBe("local");
+    expect(config["claude-mem"].command).toEqual([testPath]);
 
     const instructions = generateInstallInstructions();
     expect(typeof instructions).toBe("string");

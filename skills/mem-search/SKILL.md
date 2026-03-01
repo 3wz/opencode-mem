@@ -89,18 +89,23 @@ Filter aggressively in steps 1 and 2 before calling `get_observations`. Fetching
 
 ## Setup
 
-Requires the claude-mem MCP server running. Add to `opencode.json`:
+Requires the claude-mem MCP server running. The opencode-mem plugin configures this automatically.
+If you need to configure manually, add to `opencode.json`:
 
 ```json
 {
   "mcp": {
     "claude-mem": {
-      "type": "remote",
-      "url": "http://localhost:37777/mcp"
+      "type": "local",
+      "command": ["/path/to/mcp-server.cjs"],
+      "enabled": true
     }
   }
 }
 ```
+
+The path to `mcp-server.cjs` is auto-configured by the opencode-mem plugin on first load.
+To find it manually: `ls ~/.claude/plugins/cache/thedotmack/claude-mem/*/scripts/mcp-server.cjs`
 
 The worker runs on port 37777 by default. Start it with:
 

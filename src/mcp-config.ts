@@ -1,9 +1,10 @@
 const DEFAULT_PORT = 37777;
 
 export interface McpConfig {
-  type: "remote";
-  url: string;
+  type: "local";
+  command: string[];
   enabled?: boolean;
+  environment?: Record<string, string>;
 }
 
 export interface OpenCodeMcpConfig {
@@ -12,13 +13,13 @@ export interface OpenCodeMcpConfig {
 
 /**
  * Generate opencode.json-compatible MCP config for claude-mem.
- * Points to the claude-mem worker's MCP endpoint.
+ * Points to the local claude-mem MCP server.
  */
-export function generateMcpConfig(port = DEFAULT_PORT): OpenCodeMcpConfig {
+export function generateMcpConfig(mcpServerPath: string): OpenCodeMcpConfig {
   return {
     "claude-mem": {
-      type: "remote",
-      url: `http://localhost:${port}/mcp`,
+      type: "local",
+      command: [mcpServerPath],
       enabled: true,
     },
   };
@@ -27,8 +28,9 @@ export function generateMcpConfig(port = DEFAULT_PORT): OpenCodeMcpConfig {
 /**
  * Generate markdown installation instructions for adding claude-mem MCP to opencode.
  */
-export function generateInstallInstructions(port = DEFAULT_PORT): string {
-  const config = generateMcpConfig(port);
+export function generateInstallInstructions(mcpServerPath?: string): string {
+  const examplePath = mcpServerPath || "/path/to/mcp-server.cjs";
+  const config = generateMcpConfig(examplePath);
   return `## Adding claude-mem MCP to opencode
 
 Add the following to your \`opencode.json\` under the \`mcp\` key:
@@ -39,6 +41,6 @@ Add the following to your \`opencode.json\` under the \`mcp\` key:
 }
 \`\`\`
 
-The claude-mem worker must be running on port ${port}.
+The \`command\` field should point to your local claude-mem MCP server executable.
 Available MCP tools: search, timeline, get_observations, save_memory.`;
 }

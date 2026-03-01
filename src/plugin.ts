@@ -51,11 +51,35 @@ function buildHooks(
     },
     "chat.message": createCapturePromptHook(memClient, state) as PluginHooks["chat.message"],
     "tool.execute.after": createSaveObservationHook(memClient, state, cwd) as PluginHooks["tool.execute.after"],
-    "experimental.chat.system.transform": createContextInjectionHook(
-      memClient,
-      projectName,
-      port,
-    ) as PluginHooks["experimental.chat.system.transform"],
+    "experimental.chat.system.transform": (async (input, output) => {
+      try {
+        // First: inject memory context (original behavior)
+        await createContextInjectionHook(memClient, projectName, port)(input, output);
+
+        // Then: prepend memory status block
+        const status = await memClient.getMemoryStatus();
+        let statusBlock: string;
+        if (status.connected) {
+          const version = status.version ? ` ${status.version}` : "";
+          statusBlock = [
+            "## \uD83E\uDDE0 Claude-Mem Status",
+            `- Connection: \u2713 Active (${status.workerUrl})`,
+            `- Worker Version:${version}`,
+            "- Available Commands: /mem-search, /mem-save, /mem-status, /mem-timeline",
+            `- Memory Viewer: ${status.workerUrl}`,
+          ].join("\n");
+        } else {
+          statusBlock = [
+            "## \uD83E\uDDE0 Claude-Mem Status",
+            "- Connection: \u2717 Disconnected",
+            "- Memory features unavailable. Start worker: claude-mem start",
+          ].join("\n");
+        }
+        output.system.unshift(statusBlock);
+      } catch {
+        // Never crash \u2014 status display is best-effort
+      }
+    }) as PluginHooks["experimental.chat.system.transform"],
     "experimental.session.compacting": createCompactionHook(
       memClient,
       projectName,
