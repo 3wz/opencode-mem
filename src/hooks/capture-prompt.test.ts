@@ -149,7 +149,7 @@ describe("createCapturePromptHook", () => {
     expect(body?.prompt).toContain("second part");
   });
 
-  it("filters out synthetic parts", async () => {
+  it("includes synthetic parts (no longer filtered)", async () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
@@ -171,10 +171,10 @@ describe("createCapturePromptHook", () => {
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as { prompt?: string } | null;
     expect(body?.prompt).toContain("real message");
-    expect(body?.prompt).not.toContain("synthetic message");
+    expect(body?.prompt).toContain("synthetic message");
   });
 
-  it("filters out ignored parts", async () => {
+  it("includes ignored parts (no longer filtered)", async () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
@@ -196,7 +196,7 @@ describe("createCapturePromptHook", () => {
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as { prompt?: string } | null;
     expect(body?.prompt).toContain("important");
-    expect(body?.prompt).not.toContain("ignored text");
+    expect(body?.prompt).toContain("ignored text");
   });
 
   it("calls initSession only on first message (promptNumber === 1)", async () => {

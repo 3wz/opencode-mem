@@ -29,7 +29,7 @@ export function createCapturePromptHook(
     // Extract text from parts array (TextPart items with type === "text")
     const parts = output.parts ?? [];
     const textContent = (parts as TextPartLike[])
-      .filter(p => p?.type === "text" && !p?.synthetic && !p?.ignored)
+      .filter(p => p?.type === "text")
       .map(p => p.text ?? "")
       .join("\n");
 
