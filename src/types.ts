@@ -28,6 +28,9 @@ export interface ObservationPayload {
   tool_input: Record<string, unknown>;
   tool_response: string;
   cwd?: string;
+  last_user_message?: string;
+  last_assistant_message?: string;
+  prompt_number?: number;
 }
 
 export interface SummarizePayload {

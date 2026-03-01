@@ -11,7 +11,7 @@ export function createSaveObservationHook(
   state: PluginState,
   cwd = "",
 ) {
-  void state;
+
 
   return async (
     input: { tool: string; sessionID: string; callID: string; args: any },
@@ -50,6 +50,9 @@ export function createSaveObservationHook(
       tool_input: safeParseJson(cleanInput),
       tool_response: cleanOutput,
       cwd: cwd || undefined,
+      last_user_message: state.lastUserMessage || undefined,
+      last_assistant_message: state.lastAssistantMessage || undefined,
+      prompt_number: state.promptNumber > 0 ? state.promptNumber : undefined,
     });
   };
 }

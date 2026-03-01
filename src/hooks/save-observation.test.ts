@@ -203,3 +203,124 @@ describe("createSaveObservationHook", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+  it("includes last_user_message when present in state", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState();
+    state.lastUserMessage = "What is the current directory?";
+    const hook = createSaveObservationHook(client, state, "/test");
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: { command: "pwd" } },
+      { title: "bash", output: "/home/user", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(body?.last_user_message).toBe("What is the current directory?");
+  });
+
+  it("includes last_assistant_message when present in state", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState();
+    state.lastAssistantMessage = "I'll check the current directory for you.";
+    const hook = createSaveObservationHook(client, state, "/test");
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: { command: "pwd" } },
+      { title: "bash", output: "/home/user", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(body?.last_assistant_message).toBe("I'll check the current directory for you.");
+  });
+
+  it("includes prompt_number when greater than 0 in state", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState();
+    state.promptNumber = 5;
+    const hook = createSaveObservationHook(client, state, "/test");
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: { command: "pwd" } },
+      { title: "bash", output: "/home/user", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(body?.prompt_number).toBe(5);
+  });
+
+  it("omits last_user_message when empty string in state", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState();
+    state.lastUserMessage = "";
+    const hook = createSaveObservationHook(client, state, "/test");
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: { command: "pwd" } },
+      { title: "bash", output: "/home/user", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(body?.last_user_message).toBeUndefined();
+  });
+
+  it("omits last_assistant_message when empty string in state", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState();
+    state.lastAssistantMessage = "";
+    const hook = createSaveObservationHook(client, state, "/test");
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: { command: "pwd" } },
+      { title: "bash", output: "/home/user", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(body?.last_assistant_message).toBeUndefined();
+  });
+
+  it("omits prompt_number when 0 or less in state", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const state = makeState();
+    state.promptNumber = 0;
+    const hook = createSaveObservationHook(client, state, "/test");
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: { command: "pwd" } },
+      { title: "bash", output: "/home/user", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(body?.prompt_number).toBeUndefined();
+  });
+
