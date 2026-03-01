@@ -1,10 +1,9 @@
 {
-  "active_plan": "/Users/heitor/Developer/github.com/bloodf/opencode-mem/.sisyphus/plans/opencode-mem-complete.md",
-  "started_at": "2026-02-28T22:00:00.000Z",
+  "active_plan": "/Users/heitor/Developer/github.com/bloodf/opencode-mem/.sisyphus/plans/init-deep-agents-md.md",
+  "started_at": "2026-03-01T22:16:15.101Z",
   "session_ids": [
-    "ses_35968bea8ffexG4uPdLC1OrNpL",
     "ses_35a2f15fcffe2a1QrLGH4awU9z"
   ],
-  "plan_name": "opencode-mem-complete",
+  "plan_name": "init-deep-agents-md",
   "agent": "atlas"
 }

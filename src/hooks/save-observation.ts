@@ -3,8 +3,9 @@ import type { PluginState } from "../types.js";
 import { safeParseJson } from "../utils/safe-parse.js";
 import { shouldSkipTool } from "../utils/tool-filter.js";
 import { stripMemoryTagsFromJson, stripMemoryTagsFromText } from "../utils/strip-tags.js";
+import { MAX_OUTPUT_BYTES } from "../constants.js";
 
-const MAX_OUTPUT_BYTES = 100 * 1024;
+
 
 export function createSaveObservationHook(
   memClient: ClaudeMemClient,
@@ -17,9 +18,7 @@ export function createSaveObservationHook(
     input: { tool: string; sessionID: string; callID: string; args: any },
     output: { title: string; output: string; metadata: any },
   ): Promise<void> => {
-    void input.callID;
-    void output.title;
-    void output.metadata;
+
 
     if (shouldSkipTool(input.tool)) return;
 

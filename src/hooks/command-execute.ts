@@ -1,16 +1,14 @@
 import type { ClaudeMemClient } from "../client.js";
-import type { PluginState } from "../types.js";
+
 import { safeParseJson } from "../utils/safe-parse.js";
 import { stripMemoryTagsFromJson } from "../utils/strip-tags.js";
 
 export function createCommandExecuteHook(
   memClient: ClaudeMemClient,
-  state: PluginState,
 ) {
-  void state;
 
   return async (
-    input: { command: string; sessionID: string; arguments: any },
+    input: { command: string; sessionID: string; arguments: string },
     _output: { parts: unknown[] },
   ): Promise<void> => {
     if (!input.sessionID || !input.command) return;

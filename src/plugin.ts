@@ -17,6 +17,12 @@ type PluginHooks = Awaited<ReturnType<Plugin>>;
 
 type LogLevel = "info" | "warn" | "error";
 
+interface PluginClientLike {
+  app: {
+    log(opts: { body: { service: string; message: string; level: LogLevel } }): void;
+  };
+}
+
 type PluginFactories = {
   clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => ClaudeMemClient;
   detectFn: () => Promise<{ installed: boolean; workerRunning: boolean }>;
@@ -35,7 +41,7 @@ function resolveProjectName(project: unknown, directory: string): string {
   return basename(directory);
 }
 
-function createLogger(client: any): { log: (msg: string, level?: LogLevel) => void; setReady: () => void } {
+function createLogger(client: PluginClientLike): { log: (msg: string, level?: LogLevel) => void; setReady: () => void } {
   let ready = false;
 
   const log = (msg: string, level: LogLevel = "info") => {
@@ -137,7 +143,7 @@ function buildHooks(
       memClient,
       projectName,
     ) as PluginHooks["experimental.session.compacting"],
-    "command.execute.before": createCommandExecuteHook(memClient, state) as PluginHooks["command.execute.before"],
+    "command.execute.before": createCommandExecuteHook(memClient) as PluginHooks["command.execute.before"],
     "experimental.text.complete": createTextCompleteHook(memClient, state) as PluginHooks["experimental.text.complete"],
   };
 }
@@ -163,10 +169,10 @@ const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
 
 // Internal function for testing - allows injecting mock client and detect functions
 export function createPluginWithDependencies(
-  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => any,
-  detectFn?: () => Promise<any>,
+  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => ClaudeMemClient,
+  detectFn?: () => Promise<{ installed: boolean; workerRunning: boolean }>,
   getPortFn?: () => number,
-  autoSetupFn?: (deps: any) => Promise<any>,
+  autoSetupFn?: (deps: ReturnType<typeof createDefaultDeps>) => Promise<{ worker: { status: string } }>,
   getHostFn?: () => string,
 ): Plugin {
   return async ({ client, project, directory }) => {
@@ -185,13 +191,13 @@ export function createPluginWithDependencies(
 
 // Alias for backward compatibility
 export const createPluginWithClient = (
-  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => any,
+  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => ClaudeMemClient,
 ) =>
   createPluginWithDependencies(clientFactory);
 
 async function initializePlugin(
   factories: PluginFactories,
-  input: { client: any; project: unknown; directory: string },
+  input: { client: PluginClientLike; project: unknown; directory: string },
 ): Promise<PluginHooks> {
   const { client, project, directory } = input;
   const port = factories.getPortFn();

@@ -24,7 +24,11 @@ export async function configureMcp(deps: SetupDeps): Promise<SetupStepResult> {
 
     let config: Record<string, unknown>;
     try {
-      config = (await deps.readJson(OPENCODE_CONFIG_PATH)) as Record<string, unknown>;
+      const raw = await deps.readJson(OPENCODE_CONFIG_PATH);
+      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+        return { status: "failed" as const, message: "opencode.json is not a valid JSON object" };
+      }
+      config = raw as Record<string, unknown>;
     } catch {
       return { status: "failed", message: "opencode.json contains invalid JSON — skipping MCP configuration" };
     }

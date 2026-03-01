@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="package.json">
-    <img src="https://img.shields.io/badge/version-0.1.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-1.1.0-green.svg" alt="Version">
   </a>
   <a href="https://github.com/thedotmack/claude-mem">
     <img src="https://img.shields.io/badge/powered%20by-claude--mem-blue.svg" alt="Powered by claude-mem">
@@ -96,7 +96,7 @@ Both Claude Code and OpenCode connect to the same worker and database. Memories 
 
 ## Automatic Setup
 
-When the plugin loads for the first time, it runs a 5-step setup sequence. No manual intervention required.
+When the plugin loads for the first time, it runs a 6-step setup sequence. No manual intervention required.
 
 | Step | What happens | When skipped |
 |------|-------------|-------------|

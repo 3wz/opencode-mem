@@ -40,8 +40,10 @@ export function readSettings(): ClaudeMemConfig {
 /** Get the data directory (from settings or default ~/.claude-mem) */
 export function getDataDir(): string {
   // Note: can't call readSettings() here (circular), use default
-  const envDir = process.env.CLAUDE_MEM_DATA_DIR;
-  return envDir ?? join(homedir(), ".claude-mem");
+  const envDir = process.env.CLAUDE_MEM_DATA_DIR?.trim();
+  // Validate path to prevent traversal attacks (reject paths containing "..")
+  const dataDir = envDir && !envDir.includes("..") ? envDir : join(homedir(), ".claude-mem");
+  return dataDir;
 }
 
 /** Get the worker port (from settings or default 37777) */

@@ -43,7 +43,7 @@ export interface SessionCompletePayload {
 }
 
 export interface PluginState {
-  sessionDbId?: number;
+
   isWorkerRunning: boolean;
   projectName: string;
   sessionId: string;

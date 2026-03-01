@@ -1,8 +1,9 @@
 import type { ClaudeMemClient } from "../client.js";
 import type { PluginState } from "../types.js";
 import { stripMemoryTagsFromText } from "../utils/strip-tags.js";
+import { MAX_OUTPUT_BYTES } from "../constants.js";
 
-const MAX_OUTPUT_BYTES = 100 * 1024;
+
 
 export function createTextCompleteHook(
   memClient: ClaudeMemClient,

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { createCommandExecuteHook } from "./command-execute.js";
 import { ClaudeMemClient } from "../client.js";
-import type { PluginState } from "../types.js";
+
 import type { Server } from "bun";
 
 let mockServer: Server<undefined>;
@@ -24,22 +24,14 @@ beforeAll(() => {
 
 afterAll(() => mockServer.stop());
 
-const makeState = (): PluginState => ({
-  isWorkerRunning: true,
-  projectName: "test-project",
-  sessionId: "sess_test",
-  promptNumber: 0,
-  lastUserMessage: "",
-  lastAssistantMessage: "",
-  summarySent: false,
-});
+
 
 describe("createCommandExecuteHook", () => {
   it("captures command as observation", async () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const hook = createCommandExecuteHook(client, makeState());
+    const hook = createCommandExecuteHook(client);
 
     await hook(
       { command: "test-cmd", sessionID: "sess_1", arguments: { foo: "bar" } },
@@ -58,7 +50,7 @@ describe("createCommandExecuteHook", () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const hook = createCommandExecuteHook(client, makeState());
+    const hook = createCommandExecuteHook(client);
 
     await hook(
       { command: "test-cmd", sessionID: "", arguments: {} },
@@ -75,7 +67,7 @@ describe("createCommandExecuteHook", () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const hook = createCommandExecuteHook(client, makeState());
+    const hook = createCommandExecuteHook(client);
 
     await hook(
       { command: "", sessionID: "sess_1", arguments: {} },
@@ -92,7 +84,7 @@ describe("createCommandExecuteHook", () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const hook = createCommandExecuteHook(client, makeState());
+    const hook = createCommandExecuteHook(client);
 
     await hook(
       {
@@ -118,7 +110,7 @@ describe("createCommandExecuteHook", () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const hook = createCommandExecuteHook(client, makeState());
+    const hook = createCommandExecuteHook(client);
     const circular: Record<string, unknown> = {};
     circular.self = circular;
 
