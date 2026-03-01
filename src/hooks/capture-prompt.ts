@@ -2,14 +2,11 @@ import type { ClaudeMemClient } from "../client.js";
 import type { PluginState } from "../types.js";
 import { stripMemoryTagsFromText } from "../utils/strip-tags.js";
 
-type MessageContentPart = {
+type TextPartLike = {
   type?: string;
   text?: string;
-};
-
-type ChatMessage = {
-  content?: string | MessageContentPart[];
-  text?: string;
+  synthetic?: boolean;
+  ignored?: boolean;
 };
 
 /**
@@ -23,27 +20,18 @@ export function createCapturePromptHook(
 ) {
   return async (
     input: { sessionID: string; agent?: string },
-    output: { message: ChatMessage; parts: unknown[] },
+    output: { message: unknown; parts: unknown[] },
   ): Promise<void> => {
-    void output.parts;
-
     if (!input.sessionID) {
       return;
     }
 
-    const message = output.message;
-    let textContent = "";
-
-    if (typeof message?.content === "string") {
-      textContent = message.content;
-    } else if (Array.isArray(message?.content)) {
-      textContent = message.content
-        .filter((part): part is MessageContentPart => part?.type === "text")
-        .map((part) => part.text ?? "")
-        .join("\n");
-    } else if (message?.text) {
-      textContent = message.text;
-    }
+    // Extract text from parts array (TextPart items with type === "text")
+    const parts = output.parts ?? [];
+    const textContent = (parts as TextPartLike[])
+      .filter(p => p?.type === "text" && !p?.synthetic && !p?.ignored)
+      .map(p => p.text ?? "")
+      .join("\n");
 
     const cleanText = stripMemoryTagsFromText(textContent);
     if (!cleanText.trim()) {

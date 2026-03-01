@@ -35,7 +35,7 @@ const makeState = (): PluginState => ({
 });
 
 describe("createCapturePromptHook", () => {
-  it("captures user message (string content)", async () => {
+  it("captures user message from parts array", async () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
@@ -43,7 +43,7 @@ describe("createCapturePromptHook", () => {
 
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "hello world" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "hello world" }] },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -61,12 +61,12 @@ describe("createCapturePromptHook", () => {
 
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "first prompt" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "first prompt" }] },
     );
 
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "second prompt" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "second prompt" }] },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -83,7 +83,7 @@ describe("createCapturePromptHook", () => {
 
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "hello <private>secret</private> world" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "hello <private>secret</private> world" }] },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -101,7 +101,7 @@ describe("createCapturePromptHook", () => {
 
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "<private>all secret</private>" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "<private>all secret</private>" }] },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -116,7 +116,7 @@ describe("createCapturePromptHook", () => {
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createCapturePromptHook(client, makeState());
 
-    await hook({ sessionID: "" }, { message: { content: "hello" }, parts: [] });
+    await hook({ sessionID: "" }, { message: {}, parts: [{ type: "text", text: "hello" }] });
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -124,7 +124,7 @@ describe("createCapturePromptHook", () => {
     expect(receivedBody).toBeNull();
   });
 
-  it("handles array content parts", async () => {
+  it("handles multiple text parts joined by newline", async () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
@@ -133,8 +133,11 @@ describe("createCapturePromptHook", () => {
     await hook(
       { sessionID: "sess_1" },
       {
-        message: { content: [{ type: "text", text: "array content" }] },
-        parts: [],
+        message: {},
+        parts: [
+          { type: "text", text: "first part" },
+          { type: "text", text: "second part" },
+        ],
       },
     );
 
@@ -142,10 +145,11 @@ describe("createCapturePromptHook", () => {
 
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as { prompt?: string } | null;
-    expect(body?.prompt).toContain("array content");
+    expect(body?.prompt).toContain("first part");
+    expect(body?.prompt).toContain("second part");
   });
 
-  it("falls back to message.text when content is missing", async () => {
+  it("filters out synthetic parts", async () => {
     receivedBody = null;
     requestCount = 0;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
@@ -153,16 +157,47 @@ describe("createCapturePromptHook", () => {
 
     await hook(
       { sessionID: "sess_1" },
-      { message: { text: "fallback text" }, parts: [] },
+      {
+        message: {},
+        parts: [
+          { type: "text", text: "real message", synthetic: false },
+          { type: "text", text: "synthetic message", synthetic: true },
+        ],
+      },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as { prompt?: string } | null;
-    expect(body?.prompt).toContain("fallback text");
+    expect(body?.prompt).toContain("real message");
+    expect(body?.prompt).not.toContain("synthetic message");
   });
-});
+
+  it("filters out ignored parts", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createCapturePromptHook(client, makeState());
+
+    await hook(
+      { sessionID: "sess_1" },
+      {
+        message: {},
+        parts: [
+          { type: "text", text: "important", ignored: false },
+          { type: "text", text: "ignored text", ignored: true },
+        ],
+      },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as { prompt?: string } | null;
+    expect(body?.prompt).toContain("important");
+    expect(body?.prompt).not.toContain("ignored text");
+  });
 
   it("calls initSession only on first message (promptNumber === 1)", async () => {
     receivedBody = null;
@@ -174,7 +209,7 @@ describe("createCapturePromptHook", () => {
     // First message
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "first prompt" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "first prompt" }] },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -185,7 +220,7 @@ describe("createCapturePromptHook", () => {
     requestCount = 0;
     await hook(
       { sessionID: "sess_1" },
-      { message: { content: "second prompt" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "second prompt" }] },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -196,3 +231,4 @@ describe("createCapturePromptHook", () => {
     // Second message should NOT trigger initSession
     expect(secondRequestCount).toBe(0);
   });
+});

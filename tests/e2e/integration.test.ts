@@ -193,7 +193,7 @@ describe("E2E integration", () => {
 
     await hooks.chat.message(
       { sessionID: "sess_e2e" },
-      { message: { content: "hello from e2e" }, parts: [] },
+      { message: {}, parts: [{ type: "text", text: "hello from e2e" }] },
     );
 
     await hooks.tool.execute.after(
@@ -277,7 +277,7 @@ describe("E2E integration", () => {
     await expect(
       hooks.chat.message(
         { sessionID: "sess_down" },
-        { message: { content: "still works" }, parts: [] },
+        { message: {}, parts: [{ type: "text", text: "still works" }] },
       ),
     ).resolves.toBeUndefined();
 
@@ -332,10 +332,8 @@ describe("E2E integration", () => {
     await hooks.chat.message(
       { sessionID: "sess_private" },
       {
-        message: {
-          content: "hello <claude-mem-context>context</claude-mem-context> world",
-        },
-        parts: [],
+        message: {},
+        parts: [{ type: "text", text: "hello <claude-mem-context>context</claude-mem-context> world" }],
       },
     );
 
