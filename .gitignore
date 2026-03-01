@@ -5,3 +5,6 @@ build
 *.log
 .env
 .env.local
+
+.sisyphus/
+.omc/
