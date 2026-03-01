@@ -163,3 +163,36 @@ describe("createCapturePromptHook", () => {
     expect(body?.prompt).toContain("fallback text");
   });
 });
+
+  it("calls initSession only on first message (promptNumber === 1)", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const state = makeState();
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createCapturePromptHook(client, state);
+
+    // First message
+    await hook(
+      { sessionID: "sess_1" },
+      { message: { content: "first prompt" }, parts: [] },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const firstRequestCount = requestCount;
+
+    // Second message
+    receivedBody = null;
+    requestCount = 0;
+    await hook(
+      { sessionID: "sess_1" },
+      { message: { content: "second prompt" }, parts: [] },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const secondRequestCount = requestCount;
+
+    // First message should trigger initSession
+    expect(firstRequestCount).toBeGreaterThan(0);
+    // Second message should NOT trigger initSession
+    expect(secondRequestCount).toBe(0);
+  });

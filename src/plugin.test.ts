@@ -175,7 +175,7 @@ describe("OpenCodeMem plugin", () => {
     });
   });
 
-  it("calls initSession on session.created when worker is running", async () => {
+  it("does not call initSession on session.created", async () => {
     detectInstalled = true;
     detectWorkerRunning = true;
 
@@ -189,12 +189,7 @@ describe("OpenCodeMem plugin", () => {
 
     await expect(hooks.event!(createSessionEvent("session.created") as any)).resolves.toBeUndefined();
 
-    expect(mockInitSession).toHaveBeenCalledTimes(1);
-    expect(mockInitSession).toHaveBeenCalledWith({
-      contentSessionId: "sess_test123",
-      project: "/test/project",
-      prompt: "",
-    });
+    expect(mockInitSession).toHaveBeenCalledTimes(0);
   });
 
   it("calls completeSession on session.deleted when worker is running", async () => {
@@ -253,7 +248,7 @@ describe("OpenCodeMem plugin", () => {
     expect(mockCompleteSession).toHaveBeenCalledTimes(0);
   });
 
-  it("falls back to directory when project.path is undefined", async () => {
+  it("does not call initSession on session.created (even with fallback directory)", async () => {
     detectInstalled = true;
     detectWorkerRunning = true;
 
@@ -267,11 +262,7 @@ describe("OpenCodeMem plugin", () => {
 
     await hooks.event!(createSessionEvent("session.created") as any);
 
-    expect(mockInitSession).toHaveBeenCalledWith({
-      contentSessionId: "sess_test123",
-      project: "/test/project",
-      prompt: "",
-    });
+    expect(mockInitSession).toHaveBeenCalledTimes(0);
   });
 
   it("swallows client.app.log errors", async () => {

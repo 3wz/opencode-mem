@@ -75,14 +75,6 @@ function buildHooks(
         const sessionId = event.properties.info.id;
         state.sessionId = sessionId;
         state.summarySent = false;
-
-        if (state.isWorkerRunning && sessionId) {
-          void memClient.initSession({
-            contentSessionId: sessionId,
-            project: projectName,
-            prompt: "",
-          });
-        }
       }
 
       if (event.type === "session.deleted") {

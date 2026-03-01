@@ -53,10 +53,12 @@ export function createCapturePromptHook(
     state.lastUserMessage = cleanText;
     state.promptNumber += 1;
 
-    void memClient.initSession({
-      contentSessionId: input.sessionID,
-      project: state.projectName,
-      prompt: cleanText,
-    });
+    if (state.promptNumber === 1) {
+      void memClient.initSession({
+        contentSessionId: input.sessionID,
+        project: state.projectName,
+        prompt: cleanText,
+      });
+    }
   };
 }
