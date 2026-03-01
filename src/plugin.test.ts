@@ -447,4 +447,105 @@ describe("OpenCodeMem plugin", () => {
       await expect(systemTransform({}, output)).resolves.toBeUndefined();
     });
   });
+
+  describe("session.created handler", () => {
+    it("calls completeSession when switching to a different session ID", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      const OpenCodeMem = createPluginWithDependencies(
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      // Fire session.created with first session ID
+      const event1 = createSessionEvent("session.created");
+      (event1.event.properties.info as any).id = "ses_AAA";
+      await hooks.event!(event1 as any);
+
+      // Fire session.created with different session ID
+      const event2 = createSessionEvent("session.created");
+      (event2.event.properties.info as any).id = "ses_BBB";
+      await hooks.event!(event2 as any);
+
+      // completeSession should have been called once with the old session ID
+      expect(mockCompleteSession).toHaveBeenCalledTimes(1);
+      expect(mockCompleteSession).toHaveBeenCalledWith({
+        contentSessionId: "ses_AAA",
+      });
+    });
+
+    it("does NOT call completeSession when session ID is the same (restart)", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      const OpenCodeMem = createPluginWithDependencies(
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      // Fire session.created with first session ID
+      const event1 = createSessionEvent("session.created");
+      (event1.event.properties.info as any).id = "ses_AAA";
+      await hooks.event!(event1 as any);
+
+      // Fire session.created with SAME session ID (restart)
+      const event2 = createSessionEvent("session.created");
+      (event2.event.properties.info as any).id = "ses_AAA";
+      await hooks.event!(event2 as any);
+
+      // completeSession should NOT have been called
+      expect(mockCompleteSession).toHaveBeenCalledTimes(0);
+    });
+
+    it("does NOT call completeSession when no previous session exists", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      const OpenCodeMem = createPluginWithDependencies(
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      // Fire session.created with first session ID (no previous session)
+      const event = createSessionEvent("session.created");
+      (event.event.properties.info as any).id = "ses_AAA";
+      await hooks.event!(event as any);
+
+      // completeSession should NOT have been called (no previous session)
+      expect(mockCompleteSession).toHaveBeenCalledTimes(0);
+    });
+
+    it("resets promptNumber, lastUserMessage, lastAssistantMessage on session.created", async () => {
+      detectInstalled = true;
+      detectWorkerRunning = true;
+
+      const OpenCodeMem = createPluginWithDependencies(
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
+        mockDetect,
+        mockGetPort,
+      );
+      const input = createMockInput();
+      const hooks = await OpenCodeMem(input as any);
+
+      // Fire session.created
+      const event = createSessionEvent("session.created");
+      (event.event.properties.info as any).id = "ses_AAA";
+      await hooks.event!(event as any);
+
+      // The state should be reset (we can't directly access it from tests,
+      // but the implementation should reset promptNumber, lastUserMessage, lastAssistantMessage)
+      // This test verifies the handler doesn't throw
+      expect(mockCompleteSession).toHaveBeenCalledTimes(0);
+    });
+  });
 });

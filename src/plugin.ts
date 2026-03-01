@@ -72,9 +72,20 @@ function buildHooks(
   return {
     event: async ({ event }) => {
       if (event.type === "session.created") {
-        const sessionId = event.properties.info.id;
-        state.sessionId = sessionId;
+        const newSessionId = event.properties.info.id;
+
+        // If switching to a different session, complete the old one so the worker
+        // marks it as completed and context injection can find it.
+        if (state.sessionId && state.sessionId !== newSessionId && state.isWorkerRunning) {
+          void memClient.completeSession({ contentSessionId: state.sessionId });
+        }
+
+        // Reset all per-session state for the new session
+        state.sessionId = newSessionId;
         state.summarySent = false;
+        state.promptNumber = 0;
+        state.lastUserMessage = "";
+        state.lastAssistantMessage = "";
       }
 
       if (event.type === "session.deleted") {
