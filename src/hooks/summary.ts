@@ -14,7 +14,7 @@ export function createSummaryHandler(
 
     void memClient.sendSummary({
       contentSessionId: sessionId,
-      last_assistant_message: "",
+      last_assistant_message: state.lastAssistantMessage || undefined,
     });
   };
 }

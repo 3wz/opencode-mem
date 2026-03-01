@@ -23,7 +23,14 @@ describe("types", () => {
   });
 
   it("PluginState has required fields", () => {
-    const state: PluginState = { isWorkerRunning: false, projectName: "test", sessionId: "sess_123" };
+    const state: PluginState = {
+      isWorkerRunning: false,
+      projectName: "test",
+      sessionId: "sess_123",
+      promptNumber: 0,
+      lastUserMessage: "",
+      lastAssistantMessage: "",
+    };
     expect(state.isWorkerRunning).toBe(false);
   });
 });

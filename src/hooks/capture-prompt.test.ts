@@ -28,6 +28,9 @@ const makeState = (): PluginState => ({
   isWorkerRunning: true,
   projectName: "test-project",
   sessionId: "sess_test",
+  promptNumber: 0,
+  lastUserMessage: "",
+  lastAssistantMessage: "",
 });
 
 describe("createCapturePromptHook", () => {
@@ -47,6 +50,26 @@ describe("createCapturePromptHook", () => {
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as { prompt?: string } | null;
     expect(body?.prompt).toContain("hello world");
+  });
+
+  it("updates state.lastUserMessage and increments prompt number", async () => {
+    requestCount = 0;
+    const state = makeState();
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createCapturePromptHook(client, state);
+
+    await hook(
+      { sessionID: "sess_1" },
+      { message: { content: "first prompt" }, parts: [] },
+    );
+
+    await hook(
+      { sessionID: "sess_1" },
+      { message: { content: "second prompt" }, parts: [] },
+    );
+
+    expect(state.lastUserMessage).toBe("second prompt");
+    expect(state.promptNumber).toBe(2);
   });
 
   it("strips privacy tags from prompt", async () => {

@@ -46,7 +46,10 @@ export async function configureCommands(deps: SetupDeps): Promise<SetupStepResul
       return { status: "failed", message: "opencode.json contains invalid JSON — skipping command configuration" };
     }
 
-    const existingCommands = (config.command as Record<string, unknown>) ?? {};
+    const existingCommands =
+      typeof config.command === "object" && config.command !== null && !Array.isArray(config.command)
+        ? (config.command as Record<string, unknown>)
+        : {};
 
     // Count how many commands need to be added
     const commandsToAdd: string[] = [];

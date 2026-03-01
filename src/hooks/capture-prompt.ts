@@ -50,6 +50,9 @@ export function createCapturePromptHook(
       return;
     }
 
+    state.lastUserMessage = cleanText;
+    state.promptNumber += 1;
+
     void memClient.initSession({
       contentSessionId: input.sessionID,
       project: state.projectName,

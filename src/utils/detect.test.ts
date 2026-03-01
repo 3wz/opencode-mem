@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { getDataDir, getWorkerPort, readSettings, detectClaudeMem, getMcpServerPath } from "./detect.js";
+import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
+import { getDataDir, getWorkerHost, getWorkerPort, readSettings, detectClaudeMem, getMcpServerPath } from "./detect.js";
 
 describe("getDataDir", () => {
   it("returns ~/.claude-mem by default", () => {
@@ -23,6 +26,27 @@ describe("getWorkerPort", () => {
     const port = getWorkerPort();
     expect(typeof port).toBe("number");
     expect(port).toBeGreaterThan(0);
+  });
+});
+
+describe("getWorkerHost", () => {
+  afterEach(() => {
+    delete process.env.CLAUDE_MEM_WORKER_HOST;
+    delete process.env.CLAUDE_MEM_DATA_DIR;
+  });
+
+  it("returns env host when CLAUDE_MEM_WORKER_HOST is set", () => {
+    process.env.CLAUDE_MEM_WORKER_HOST = "mem.local";
+    expect(getWorkerHost()).toBe("mem.local");
+  });
+
+  it("returns host from settings file when present", () => {
+    const tmpDir = `/tmp/claude-mem-host-${Date.now()}`;
+    mkdirSync(tmpDir, { recursive: true });
+    writeFileSync(`${tmpDir}/settings.json`, JSON.stringify({ host: "settings.local", port: 37777, dataDir: tmpDir }));
+    process.env.CLAUDE_MEM_DATA_DIR = tmpDir;
+
+    expect(getWorkerHost()).toBe("settings.local");
   });
 });
 
@@ -134,5 +158,22 @@ describe("getMcpServerPath (filesystem)", () => {
       // Result is either a valid path or null — never throws
       expect(result === null || typeof result === "string").toBe(true);
     }).not.toThrow();
+  });
+
+  it("prefers stable release over prerelease when versions tie", () => {
+    const cacheRoot = join(homedir(), ".claude", "plugins", "cache", "thedotmack", "claude-mem");
+    const stableDir = join(cacheRoot, "999.0.0", "scripts");
+    const prereleaseDir = join(cacheRoot, "999.0.0-beta.1", "scripts");
+    mkdirSync(stableDir, { recursive: true });
+    mkdirSync(prereleaseDir, { recursive: true });
+    writeFileSync(join(stableDir, "mcp-server.cjs"), "// stable");
+    writeFileSync(join(prereleaseDir, "mcp-server.cjs"), "// prerelease");
+
+    const path = getMcpServerPath();
+
+    expect(path).toContain(join("999.0.0", "scripts", "mcp-server.cjs"));
+
+    rmSync(join(cacheRoot, "999.0.0"), { recursive: true, force: true });
+    rmSync(join(cacheRoot, "999.0.0-beta.1"), { recursive: true, force: true });
   });
 });

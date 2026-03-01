@@ -7,12 +7,16 @@ let mockServer: ReturnType<typeof Bun.serve>;
 const MOCK_PORT = 37902;
 let requestCount = 0;
 let lastPath = "";
+let lastBody: unknown = null;
 
 beforeAll(() => {
   mockServer = Bun.serve({
     port: MOCK_PORT,
     async fetch(req) {
       lastPath = new URL(req.url).pathname;
+      if (req.method === "POST") {
+        lastBody = await req.json().catch(() => null);
+      }
       requestCount++;
       return new Response(JSON.stringify({ ok: true }), {
         headers: { "Content-Type": "application/json" },
@@ -27,20 +31,28 @@ const makeState = (overrides?: Partial<PluginState>): PluginState => ({
   isWorkerRunning: true,
   projectName: "test-project",
   sessionId: "sess_test",
+  promptNumber: 0,
+  lastUserMessage: "",
+  lastAssistantMessage: "",
   ...overrides,
 });
 
 describe("createSummaryHandler", () => {
   it("triggers sendSummary on session.idle event", async () => {
     requestCount = 0;
+    lastBody = null;
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const handler = createSummaryHandler(client, makeState());
+    const handler = createSummaryHandler(client, makeState({ lastAssistantMessage: "assistant final" }));
     await handler({
       event: { type: "session.idle", properties: { sessionID: "sess_idle_1" } },
     });
     await new Promise((r) => setTimeout(r, 100));
     expect(requestCount).toBeGreaterThan(0);
     expect(lastPath).toContain("/summarize");
+    expect(lastBody).toEqual({
+      contentSessionId: "sess_idle_1",
+      last_assistant_message: "assistant final",
+    });
   });
 
   it("ignores non-session.idle events", async () => {

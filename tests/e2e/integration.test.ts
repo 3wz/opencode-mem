@@ -77,6 +77,9 @@ async function createIntegratedHooks(port: number, workerRunning: boolean): Prom
     isWorkerRunning: workerRunning,
     projectName: "test-project",
     sessionId: "",
+    promptNumber: 0,
+    lastUserMessage: "",
+    lastAssistantMessage: "",
   };
 
   // Mock autoSetup to avoid making real requests during tests

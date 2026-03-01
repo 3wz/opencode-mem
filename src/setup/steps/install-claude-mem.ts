@@ -18,6 +18,11 @@ export async function installClaudeMem(deps: SetupDeps): Promise<SetupStepResult
     const result = await deps.exec(["npm", "install", "-g", "claude-mem"]);
 
     if (result.exitCode === 0) {
+      const installedPath = deps.which("claude-mem");
+      if (!installedPath) {
+        deps.log("npm install succeeded but claude-mem is not in PATH", "warn");
+        return { status: "failed", message: "npm install succeeded but claude-mem is not in PATH" };
+      }
       deps.log("claude-mem installed successfully", "info");
       return { status: "success", message: "claude-mem installed successfully via npm" };
     } else {

@@ -28,6 +28,9 @@ const makeState = (): PluginState => ({
   isWorkerRunning: true,
   projectName: "test-project",
   sessionId: "sess_test",
+  promptNumber: 0,
+  lastUserMessage: "",
+  lastAssistantMessage: "",
 });
 
 describe("createCommandExecuteHook", () => {
@@ -108,5 +111,27 @@ describe("createCommandExecuteHook", () => {
     expect(body?.tool_input?.public).toBe('visible');
     expect(JSON.stringify(body?.tool_input)).not.toContain("<private>");
 
+  });
+
+  it("handles unserializable command arguments without throwing", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createCommandExecuteHook(client, makeState());
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+
+    await expect(
+      hook(
+        { command: "test-cmd", sessionID: "sess_1", arguments: circular },
+        { parts: [] },
+      ),
+    ).resolves.toBeUndefined();
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as { tool_input?: Record<string, unknown> } | null;
+    expect(JSON.stringify(body?.tool_input)).toContain("unserializable input");
   });
 });

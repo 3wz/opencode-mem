@@ -44,6 +44,7 @@ beforeEach(() => {
   mockResponse = { status: "ok" };
   mockStatus = 200;
   mockDelay = 0;
+  delete process.env.CLAUDE_MEM_WORKER_HOST;
 });
 
 describe("ClaudeMemClient", () => {
@@ -226,5 +227,24 @@ describe("ClaudeMemClient.getMemoryStatus", () => {
     expect(status.connected).toBe(false);
     expect(status.workerUrl).toBe("http://localhost:39999");
     expect(status.version).toBeUndefined();
+  });
+});
+
+describe("ClaudeMemClient host resolution", () => {
+  it("uses CLAUDE_MEM_WORKER_HOST when present", async () => {
+    process.env.CLAUDE_MEM_WORKER_HOST = "example.local";
+    const client = new ClaudeMemClient(mockPort, 2000);
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.workerUrl).toBe(`http://example.local:${mockPort}`);
+  });
+
+  it("normalizes host passed to constructor", async () => {
+    const client = new ClaudeMemClient(mockPort, 2000, () => {}, "http://localhost/");
+
+    const status = await client.getMemoryStatus();
+
+    expect(status.workerUrl).toBe(`http://localhost:${mockPort}`);
   });
 });

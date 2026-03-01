@@ -8,6 +8,7 @@ import { ClaudeMemClient } from "../client.js";
 const DEFAULT_CONFIG: ClaudeMemConfig = {
   port: 37777,
   dataDir: join(homedir(), ".claude-mem"),
+  host: "localhost",
 };
 
 export interface ClaudeMemDetectResult {
@@ -27,6 +28,7 @@ export function readSettings(): ClaudeMemConfig {
     return {
       port: parsed.port ?? DEFAULT_CONFIG.port,
       dataDir: parsed.dataDir ?? DEFAULT_CONFIG.dataDir,
+      host: parsed.host ?? DEFAULT_CONFIG.host,
       model: parsed.model,
       logLevel: parsed.logLevel,
     };
@@ -49,6 +51,20 @@ export function getWorkerPort(): number {
     return settings.port;
   } catch {
     return DEFAULT_CONFIG.port;
+  }
+}
+
+export function getWorkerHost(): string {
+  const envHost = process.env.CLAUDE_MEM_WORKER_HOST?.trim();
+  if (envHost) {
+    return envHost;
+  }
+
+  try {
+    const settings = readSettings();
+    return settings.host?.trim() || DEFAULT_CONFIG.host || "localhost";
+  } catch {
+    return DEFAULT_CONFIG.host || "localhost";
   }
 }
 
@@ -78,16 +94,28 @@ export function getMcpServerPath(): string | null {
       const dirs = readdirSync(cacheDir);
       if (dirs.length > 0) {
         // Sort versions descending (newest first)
+        const parseVersion = (value: string): [number, number, number, boolean] => {
+          const match = value.match(/^(\d+)\.(\d+)\.(\d+)(-.+)?$/);
+          if (!match) {
+            return [0, 0, 0, true];
+          }
+
+          const major = Number.parseInt(match[1], 10);
+          const minor = Number.parseInt(match[2], 10);
+          const patch = Number.parseInt(match[3], 10);
+          const preRelease = Boolean(match[4]);
+          return [major, minor, patch, preRelease];
+        };
+
         const versions = dirs.sort((a, b) => {
-          const aParts = a.split(".").map(Number);
-          const bParts = b.split(".").map(Number);
-          const aMaj = aParts[0] ?? 0;
-          const aMin = aParts[1] ?? 0;
-          const aPatch = aParts[2] ?? 0;
-          const bMaj = bParts[0] ?? 0;
-          const bMin = bParts[1] ?? 0;
-          const bPatch = bParts[2] ?? 0;
-          return bMaj - aMaj || bMin - aMin || bPatch - aPatch;
+          const [aMaj, aMin, aPatch, aPre] = parseVersion(a);
+          const [bMaj, bMin, bPatch, bPre] = parseVersion(b);
+
+          if (bMaj !== aMaj) return bMaj - aMaj;
+          if (bMin !== aMin) return bMin - aMin;
+          if (bPatch !== aPatch) return bPatch - aPatch;
+          if (aPre !== bPre) return aPre ? 1 : -1;
+          return b.localeCompare(a);
         });
         const latestVersion = versions[0];
         const mcpPath = join(cacheDir, latestVersion, "scripts", "mcp-server.cjs");

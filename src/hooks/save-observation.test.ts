@@ -27,6 +27,9 @@ const makeState = (): PluginState => ({
   isWorkerRunning: true,
   projectName: "test-project",
   sessionId: "sess_test",
+  promptNumber: 0,
+  lastUserMessage: "",
+  lastAssistantMessage: "",
 });
 
 describe("createSaveObservationHook", () => {
@@ -124,6 +127,49 @@ describe("createSaveObservationHook", () => {
     const body = receivedBody as any;
     expect(body?.tool_response?.length).toBeLessThan(110 * 1024);
     expect(body?.tool_response).toContain("[truncated]");
+  });
+
+  it("truncates tool input exceeding 100KB", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createSaveObservationHook(client, makeState(), "/test");
+    const bigInput = { data: "x".repeat(200 * 1024) };
+
+    await hook(
+      { tool: "bash", sessionID: "sess_1", callID: "call_1", args: bigInput },
+      { title: "bash", output: "ok", metadata: {} },
+    );
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    const inputText = JSON.stringify(body?.tool_input);
+    expect(inputText.length).toBeLessThan(120 * 1024);
+    expect(inputText).toContain("[truncated]");
+  });
+
+  it("handles circular tool input without throwing", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createSaveObservationHook(client, makeState(), "/test");
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+
+    await expect(
+      hook(
+        { tool: "bash", sessionID: "sess_1", callID: "call_1", args: circular },
+        { title: "bash", output: "ok", metadata: {} },
+      ),
+    ).resolves.toBeUndefined();
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(requestCount).toBeGreaterThan(0);
+    const body = receivedBody as any;
+    expect(JSON.stringify(body?.tool_input)).toContain("unserializable input");
   });
 
   it("passes cwd in payload", async () => {

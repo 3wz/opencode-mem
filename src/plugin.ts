@@ -7,12 +7,57 @@ import { createSaveObservationHook } from "./hooks/save-observation.js";
 import { createCommandExecuteHook } from "./hooks/command-execute.js";
 import { createTextCompleteHook } from "./hooks/text-complete.js";
 import { createSummaryHandler } from "./hooks/summary.js";
-import { detectClaudeMem, getWorkerPort } from "./utils/detect.js";
+import { detectClaudeMem, getWorkerHost, getWorkerPort } from "./utils/detect.js";
 import { autoSetup } from "./setup/auto-setup.js";
 import { createDefaultDeps } from "./setup/types.js";
 import type { PluginState } from "./types.js";
 
 type PluginHooks = Awaited<ReturnType<Plugin>>;
+
+type LogLevel = "info" | "warn" | "error";
+
+type PluginFactories = {
+  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => ClaudeMemClient;
+  detectFn: () => Promise<{ installed: boolean; workerRunning: boolean }>;
+  getPortFn: () => number;
+  getHostFn: () => string;
+  autoSetupFn: (deps: ReturnType<typeof createDefaultDeps>) => Promise<{ worker: { status: string } }>;
+};
+
+function resolveProjectName(project: unknown, directory: string): string {
+  if (typeof project !== "object" || project === null) {
+    return directory;
+  }
+
+  const pathValue = (project as Record<string, unknown>).path;
+  return typeof pathValue === "string" && pathValue.length > 0 ? pathValue : directory;
+}
+
+function createLogger(client: any): { log: (msg: string, level?: LogLevel) => void; setReady: () => void } {
+  let ready = false;
+
+  const log = (msg: string, level: LogLevel = "info") => {
+    if (!ready) return;
+    try {
+      client.app.log({
+        body: {
+          service: "opencode-mem",
+          message: `[opencode-mem] ${msg}`,
+          level,
+        },
+      });
+    } catch {
+      // Never crash plugin on logging failures.
+    }
+  };
+
+  return {
+    log,
+    setReady: () => {
+      ready = true;
+    },
+  };
+}
 
 function buildHooks(
   memClient: ClaudeMemClient,
@@ -22,6 +67,7 @@ function buildHooks(
   cwd: string,
 ): PluginHooks {
   const summaryHandler = createSummaryHandler(memClient, state);
+  const contextInjectionHook = createContextInjectionHook(memClient, projectName, port);
 
   return {
     event: async ({ event }) => {
@@ -54,7 +100,7 @@ function buildHooks(
     "experimental.chat.system.transform": (async (input, output) => {
       try {
         // First: inject memory context (original behavior)
-        await createContextInjectionHook(memClient, projectName, port)(input, output);
+        await contextInjectionHook(input, output);
 
         // Then: prepend memory status block
         const status = await memClient.getMemoryStatus();
@@ -96,129 +142,95 @@ function buildHooks(
  * opencode session lifecycle events to claude-mem hooks.
  */
 const OpenCodeMem: Plugin = async ({ client, project, directory }) => {
-  const port = getWorkerPort();
-  const projectName = (project as { path?: string }).path ?? directory;
+  return initializePlugin(
+    {
+      clientFactory: (port, timeout, log, host) => new ClaudeMemClient(port, timeout, log, host),
+      detectFn: detectClaudeMem,
+      getPortFn: getWorkerPort,
+      getHostFn: getWorkerHost,
+      autoSetupFn: autoSetup,
+    },
+    { client, project, directory },
+  );
+};
 
-  let ready = false;
-  const log = (msg: string, level: "info" | "warn" | "error" = "info") => {
-    if (!ready) return;
-    try {
-      client.app.log({
-        body: {
-          service: "opencode-mem",
-          message: `[opencode-mem] ${msg}`,
-          level,
-        },
-      });
-    } catch {
-      // Never crash plugin on logging failures.
-    }
+// Internal function for testing - allows injecting mock client and detect functions
+export function createPluginWithDependencies(
+  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => any,
+  detectFn?: () => Promise<any>,
+  getPortFn?: () => number,
+  autoSetupFn?: (deps: any) => Promise<any>,
+  getHostFn?: () => string,
+): Plugin {
+  return async ({ client, project, directory }) => {
+    return initializePlugin(
+      {
+        clientFactory: clientFactory as PluginFactories["clientFactory"],
+        detectFn: (detectFn || detectClaudeMem) as PluginFactories["detectFn"],
+        getPortFn: (getPortFn || getWorkerPort) as PluginFactories["getPortFn"],
+        getHostFn: (getHostFn || getWorkerHost) as PluginFactories["getHostFn"],
+        autoSetupFn: (autoSetupFn || autoSetup) as PluginFactories["autoSetupFn"],
+      },
+      { client, project, directory },
+    );
   };
+}
 
-  const memClient = new ClaudeMemClient(port, 2000, log);
+// Alias for backward compatibility
+export const createPluginWithClient = (
+  clientFactory: (port: number, timeout: number, log: (msg: string) => void, host?: string) => any,
+) =>
+  createPluginWithDependencies(clientFactory);
+
+async function initializePlugin(
+  factories: PluginFactories,
+  input: { client: any; project: unknown; directory: string },
+): Promise<PluginHooks> {
+  const { client, project, directory } = input;
+  const port = factories.getPortFn();
+  const host = factories.getHostFn();
+  const projectName = resolveProjectName(project, directory);
+  const logger = createLogger(client);
+
+  const memClient = factories.clientFactory(port, 2000, logger.log, host);
 
   const state: PluginState = {
     isWorkerRunning: false,
     projectName,
     sessionId: "",
+    promptNumber: 0,
+    lastUserMessage: "",
+    lastAssistantMessage: "",
   };
 
-  const detection = await detectClaudeMem();
+  const detection = await factories.detectFn();
   state.isWorkerRunning = detection.workerRunning;
 
   if (detection.workerRunning) {
-    log(`Connected to claude-mem worker on port ${port}`);
-    log(`Memory viewer: http://localhost:${port}`);
+    logger.log(`Connected to claude-mem worker on port ${port}`);
+    logger.log(`Memory viewer: http://${host}:${port}`);
   } else if (detection.installed) {
-    log("Claude-mem installed but worker not running. Memory features disabled.");
+    logger.log("Claude-mem installed but worker not running. Memory features disabled.");
   } else {
-    log("Claude-mem not detected. Memory features disabled.");
+    logger.log("Claude-mem not detected. Memory features disabled.");
   }
 
-  // Auto-setup: always run MCP config/skills setup (idempotent, fire-and-forget).
-  // Worker start is skipped internally when already running.
-  const setupDeps = createDefaultDeps(log);
-  void autoSetup(setupDeps).then((result) => {
-    if (result.worker.status === "success" && !state.isWorkerRunning) {
-      state.isWorkerRunning = true;
-      log("Auto-setup started the worker. Memory features now active.");
-    }
-  }).catch((err) => {
-    log(`Auto-setup failed: ${err}`, "error");
-  });
-
-  ready = true;
-  return buildHooks(memClient, state, projectName, port, directory);
-};
-
-// Internal function for testing - allows injecting mock client and detect functions
-export function createPluginWithDependencies(
-  clientFactory: (port: number, timeout: number, log: (msg: string) => void) => any,
-  detectFn?: () => Promise<any>,
-  getPortFn?: () => number,
-  autoSetupFn?: (deps: any) => Promise<any>,
-): Plugin {
-  return async ({ client, project, directory }) => {
-    const port = (getPortFn || getWorkerPort)();
-    const projectName = (project as { path?: string }).path ?? directory;
-
-    let ready = false;
-    const log = (msg: string, level: "info" | "warn" | "error" = "info") => {
-      if (!ready) return;
-      try {
-        client.app.log({
-          body: {
-            service: "opencode-mem",
-            message: `[opencode-mem] ${msg}`,
-            level,
-          },
-        });
-      } catch {
-        // Never crash plugin on logging failures.
-      }
-    };
-
-    const memClient = clientFactory(port, 2000, log);
-
-    const state: PluginState = {
-      isWorkerRunning: false,
-      projectName,
-      sessionId: "",
-    };
-
-    const detection = await (detectFn || detectClaudeMem)();
-    state.isWorkerRunning = detection.workerRunning;
-
-    if (detection.workerRunning) {
-      log(`Connected to claude-mem worker on port ${port}`);
-      log(`Memory viewer: http://localhost:${port}`);
-    } else if (detection.installed) {
-      log("Claude-mem installed but worker not running. Memory features disabled.");
-    } else {
-      log("Claude-mem not detected. Memory features disabled.");
-    }
-
-    // Auto-setup: always run MCP config/skills setup (idempotent, fire-and-forget).
-    // Worker start is skipped internally when already running.
-    const setupDeps = createDefaultDeps(log);
-    const setupFn = autoSetupFn || autoSetup;
-    void setupFn(setupDeps).then((result) => {
+  const setupDeps = createDefaultDeps(logger.log);
+  void factories
+    .autoSetupFn(setupDeps)
+    .then((result) => {
       if (result.worker.status === "success" && !state.isWorkerRunning) {
         state.isWorkerRunning = true;
-        log("Auto-setup started the worker. Memory features now active.");
+        logger.log("Auto-setup started the worker. Memory features now active.");
       }
-    }).catch((err) => {
-      log(`Auto-setup failed: ${err}`, "error");
+    })
+    .catch((err) => {
+      logger.log(`Auto-setup failed: ${err}`, "error");
     });
 
-    ready = true;
-    return buildHooks(memClient, state, projectName, port, directory);
-  };
+  logger.setReady();
+  return buildHooks(memClient, state, projectName, port, directory);
 }
-
-// Alias for backward compatibility
-export const createPluginWithClient = (clientFactory: (port: number, timeout: number, log: (msg: string) => void) => any) =>
-  createPluginWithDependencies(clientFactory);
 
 export default OpenCodeMem;
 export { OpenCodeMem };

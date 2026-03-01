@@ -8,8 +8,6 @@ export function createTextCompleteHook(
   memClient: ClaudeMemClient,
   state: PluginState,
 ) {
-  void state;
-
   return async (
     input: { sessionID: string; messageID: string; partID: string },
     output: { text: string },
@@ -20,8 +18,10 @@ export function createTextCompleteHook(
     // MUST NOT mutate output.text — copy first
     let cleanText = stripMemoryTagsFromText(output.text);
     if (cleanText.length > MAX_OUTPUT_BYTES) {
-      cleanText = cleanText.slice(0, MAX_OUTPUT_BYTES) + "[truncated]";
+      cleanText = cleanText.slice(0, MAX_OUTPUT_BYTES) + "\n[truncated]";
     }
+
+    state.lastAssistantMessage = cleanText;
 
     void memClient.sendObservation({
       contentSessionId: input.sessionID,

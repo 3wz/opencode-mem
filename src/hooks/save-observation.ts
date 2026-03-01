@@ -1,18 +1,10 @@
 import type { ClaudeMemClient } from "../client.js";
 import type { PluginState } from "../types.js";
+import { safeParseJson } from "../utils/safe-parse.js";
 import { shouldSkipTool } from "../utils/tool-filter.js";
 import { stripMemoryTagsFromJson, stripMemoryTagsFromText } from "../utils/strip-tags.js";
 
 const MAX_OUTPUT_BYTES = 100 * 1024;
-
-function safeParseJson(jsonStr: string): Record<string, unknown> {
-  try {
-    const parsed = JSON.parse(jsonStr);
-    return typeof parsed === 'object' && parsed !== null ? parsed : { raw: jsonStr };
-  } catch {
-    return { raw: jsonStr };
-  }
-}
 
 export function createSaveObservationHook(
   memClient: ClaudeMemClient,
@@ -38,7 +30,18 @@ export function createSaveObservationHook(
       toolOutput = toolOutput.slice(0, MAX_OUTPUT_BYTES) + "\n[truncated]";
     }
 
-    const cleanInput = stripMemoryTagsFromJson(JSON.stringify(input.args ?? {}));
+    let inputText: string;
+    try {
+      inputText = JSON.stringify(input.args ?? {});
+    } catch {
+      inputText = "[unserializable input]";
+    }
+
+    if (inputText.length > MAX_OUTPUT_BYTES) {
+      inputText = inputText.slice(0, MAX_OUTPUT_BYTES) + "\n[truncated]";
+    }
+
+    const cleanInput = stripMemoryTagsFromJson(inputText);
     const cleanOutput = stripMemoryTagsFromText(toolOutput);
 
     void memClient.sendObservation({

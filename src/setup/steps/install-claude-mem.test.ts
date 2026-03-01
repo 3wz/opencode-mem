@@ -7,6 +7,7 @@ import type { SetupDeps } from "../types.js";
  */
 function createMockDeps(opts: {
   which?: string | null;
+  whichAfterInstall?: string | null;
   execResult?: { exitCode: number; stdout?: string };
   execThrows?: boolean;
 }): SetupDeps & { execCalls: string[][] } {
@@ -14,7 +15,12 @@ function createMockDeps(opts: {
   const logCalls: Array<{ msg: string; level?: string }> = [];
 
   return {
-    which: (_cmd: string) => opts.which ?? null,
+    which: (_cmd: string) => {
+      if (execCalls.length > 0 && opts.whichAfterInstall !== undefined) {
+        return opts.whichAfterInstall;
+      }
+      return opts.which ?? null;
+    },
     fileExists: async () => false,
     readJson: async () => ({}),
     writeFile: async () => {},
@@ -48,6 +54,7 @@ describe("installClaudeMem", () => {
     const deps = createMockDeps({
       which: null,
       execResult: { exitCode: 0 },
+      whichAfterInstall: "/usr/local/bin/claude-mem",
     });
     const result = await installClaudeMem(deps);
 
@@ -60,6 +67,7 @@ describe("installClaudeMem", () => {
     const deps = createMockDeps({
       which: null,
       execResult: { exitCode: 0 },
+      whichAfterInstall: "/usr/local/bin/claude-mem",
     });
     const result = await installClaudeMem(deps);
 
@@ -94,11 +102,25 @@ describe("installClaudeMem", () => {
     const deps = createMockDeps({
       which: null,
       execResult: { exitCode: 0 },
+      whichAfterInstall: "/usr/local/bin/claude-mem",
     });
     await installClaudeMem(deps);
 
     // Check that log was called with the installation message
     // We need to verify this by checking the implementation behavior
     expect(deps.execCalls.length).toBe(1);
+  });
+
+  it("returns failed when install succeeds but binary is still missing", async () => {
+    const deps = createMockDeps({
+      which: null,
+      execResult: { exitCode: 0 },
+      whichAfterInstall: null,
+    });
+
+    const result = await installClaudeMem(deps);
+
+    expect(result.status).toBe("failed");
+    expect(result.message).toContain("not in PATH");
   });
 });

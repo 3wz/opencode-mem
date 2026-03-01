@@ -28,6 +28,9 @@ const makeState = (): PluginState => ({
   isWorkerRunning: true,
   projectName: "test-project",
   sessionId: "sess_test",
+  promptNumber: 0,
+  lastUserMessage: "",
+  lastAssistantMessage: "",
 });
 
 describe("createTextCompleteHook", () => {
@@ -53,6 +56,19 @@ describe("createTextCompleteHook", () => {
     expect(body?.tool_name).toBe("assistant_response");
     expect(body?.tool_response).toContain("This is the assistant response");
     expect(body?.tool_input).toEqual({ messageID: "msg_1", partID: "part_1" });
+  });
+
+  it("updates state.lastAssistantMessage", async () => {
+    const state = makeState();
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createTextCompleteHook(client, state);
+
+    await hook(
+      { sessionID: "sess_1", messageID: "msg_1", partID: "part_1" },
+      { text: "Assistant final reply" },
+    );
+
+    expect(state.lastAssistantMessage).toContain("Assistant final reply");
   });
 
   it("does NOT mutate output.text", async () => {
@@ -124,7 +140,7 @@ describe("createTextCompleteHook", () => {
     expect(requestCount).toBeGreaterThan(0);
     const body = receivedBody as { tool_response?: string } | null;
     const result = body?.tool_response ?? "";
-    expect(result.length).toBeLessThanOrEqual(100 * 1024 + "[truncated]".length);
+    expect(result.length).toBeLessThanOrEqual(100 * 1024 + "\n[truncated]".length);
   });
 
   it("strips privacy tags from text", async () => {

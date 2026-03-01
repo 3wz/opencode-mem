@@ -122,4 +122,28 @@ describe("configureCommands", () => {
     expect(result.message).toContain("invalid JSON");
     expect(getWritten()).toBeNull();
   });
+
+  it("handles command as string by replacing with object map", async () => {
+    const { deps, getWritten } = createMockConfig({ command: "invalid" });
+
+    const result = await configureCommands(deps);
+
+    expect(result.status).toBe("success");
+    const parsed = JSON.parse(getWritten()!);
+    expect(typeof parsed.command).toBe("object");
+    expect(Array.isArray(parsed.command)).toBe(false);
+    expect(parsed.command["mem-search"]).toBeDefined();
+  });
+
+  it("handles command as array by replacing with object map", async () => {
+    const { deps, getWritten } = createMockConfig({ command: ["invalid"] });
+
+    const result = await configureCommands(deps);
+
+    expect(result.status).toBe("success");
+    const parsed = JSON.parse(getWritten()!);
+    expect(typeof parsed.command).toBe("object");
+    expect(Array.isArray(parsed.command)).toBe(false);
+    expect(parsed.command["mem-timeline"]).toBeDefined();
+  });
 });

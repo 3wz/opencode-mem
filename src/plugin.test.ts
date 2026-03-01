@@ -115,7 +115,7 @@ describe("OpenCodeMem plugin", () => {
 
   it("is a function", async () => {
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -124,7 +124,7 @@ describe("OpenCodeMem plugin", () => {
 
   it("returns a Promise when called", async () => {
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -136,7 +136,7 @@ describe("OpenCodeMem plugin", () => {
 
   it("returns hooks object with all expected keys", async () => {
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -159,7 +159,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = true;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -171,7 +171,7 @@ describe("OpenCodeMem plugin", () => {
     expect(mockSendSummary).toHaveBeenCalledTimes(1);
     expect(mockSendSummary).toHaveBeenCalledWith({
       contentSessionId: "sess_idle_123",
-      last_assistant_message: "",
+      last_assistant_message: undefined,
     });
   });
 
@@ -180,7 +180,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = true;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -201,7 +201,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = true;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -218,7 +218,7 @@ describe("OpenCodeMem plugin", () => {
 
   it("handles unknown event type without throwing", async () => {
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -238,7 +238,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = false;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -257,7 +257,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = true;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -277,7 +277,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = true;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -294,7 +294,7 @@ describe("OpenCodeMem plugin", () => {
     detectWorkerRunning = true;
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
     );
@@ -329,7 +329,7 @@ describe("OpenCodeMem plugin", () => {
     };
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
       mockAutoSetup,
@@ -361,7 +361,7 @@ describe("OpenCodeMem plugin", () => {
     };
 
     const OpenCodeMem = createPluginWithDependencies(
-      () => new MockClaudeMemClient(),
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
       mockDetect,
       mockGetPort,
       mockAutoSetup,
@@ -388,7 +388,7 @@ describe("OpenCodeMem plugin", () => {
       }));
 
       const OpenCodeMem = createPluginWithDependencies(
-        () => new MockClaudeMemClient(),
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
         mockDetect,
         mockGetPort,
       );
@@ -415,7 +415,7 @@ describe("OpenCodeMem plugin", () => {
       }));
 
       const OpenCodeMem = createPluginWithDependencies(
-        () => new MockClaudeMemClient(),
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
         mockDetect,
         mockGetPort,
       );
@@ -440,7 +440,7 @@ describe("OpenCodeMem plugin", () => {
       });
 
       const OpenCodeMem = createPluginWithDependencies(
-        () => new MockClaudeMemClient(),
+        (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
         mockDetect,
         mockGetPort,
       );
