@@ -79,6 +79,7 @@ function buildHooks(
           void memClient.initSession({
             contentSessionId: sessionId,
             project: projectName,
+            prompt: "",
           });
         }
       }

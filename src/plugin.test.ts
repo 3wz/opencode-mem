@@ -193,6 +193,7 @@ describe("OpenCodeMem plugin", () => {
     expect(mockInitSession).toHaveBeenCalledWith({
       contentSessionId: "sess_test123",
       project: "/test/project",
+      prompt: "",
     });
   });
 
@@ -269,6 +270,7 @@ describe("OpenCodeMem plugin", () => {
     expect(mockInitSession).toHaveBeenCalledWith({
       contentSessionId: "sess_test123",
       project: "/test/project",
+      prompt: "",
     });
   });
 
