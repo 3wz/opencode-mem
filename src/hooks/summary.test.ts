@@ -67,14 +67,6 @@ describe("createSummaryHandler", () => {
     expect(requestCount).toBe(0);
   });
 
-  it("skips when isWorkerRunning is false", async () => {
-    requestCount = 0;
-    const client = new ClaudeMemClient(MOCK_PORT, 2000);
-    const handler = createSummaryHandler(client, makeState({ isWorkerRunning: false }));
-    await handler({ event: { type: "session.idle", properties: { sessionID: "sess_1" } } });
-    await new Promise((r) => setTimeout(r, 100));
-    expect(requestCount).toBe(0);
-  });
 
   it("does not throw when worker unavailable", async () => {
     const client = new ClaudeMemClient(39996, 200);

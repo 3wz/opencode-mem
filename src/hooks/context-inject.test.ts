@@ -4,19 +4,18 @@ import { ClaudeMemClient } from "../client.js";
 
 let mockServer: ReturnType<typeof Bun.serve>;
 const MOCK_PORT = 37899;
-let mockContextResponse: unknown = {
-  context: "previous observations here",
-  projectName: "test",
-};
+let mockContextResponse: unknown = "test memory";
 let mockStatus = 200;
 
 beforeAll(() => {
   mockServer = Bun.serve({
     port: MOCK_PORT,
     async fetch() {
-      return new Response(JSON.stringify(mockContextResponse), {
+      // Return plain text for context inject endpoint
+      const text = typeof mockContextResponse === "string" ? mockContextResponse : "";
+      return new Response(text, {
         status: mockStatus,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
       });
     },
   });
@@ -27,7 +26,7 @@ afterAll(() => mockServer.stop());
 describe("createContextInjectionHook", () => {
   it("appends context to output.system when worker returns context", async () => {
     mockStatus = 200;
-    mockContextResponse = { context: "test memory", projectName: "test" };
+    mockContextResponse = "test memory";
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createContextInjectionHook(client, "test", MOCK_PORT);
     const output = { system: [] as string[] };
@@ -39,7 +38,7 @@ describe("createContextInjectionHook", () => {
 
   it("includes web viewer URL in injected context", async () => {
     mockStatus = 200;
-    mockContextResponse = { context: "data", projectName: "test" };
+    mockContextResponse = "data";
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createContextInjectionHook(client, "test", MOCK_PORT);
     const output = { system: [] as string[] };
@@ -49,7 +48,7 @@ describe("createContextInjectionHook", () => {
 
   it("skips injection when worker returns null context", async () => {
     mockStatus = 200;
-    mockContextResponse = { context: null, projectName: "test" };
+    mockContextResponse = "";
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createContextInjectionHook(client, "test", MOCK_PORT);
     const output = { system: [] as string[] };
@@ -67,7 +66,7 @@ describe("createContextInjectionHook", () => {
 
   it("does not modify existing system entries", async () => {
     mockStatus = 200;
-    mockContextResponse = { context: "new ctx", projectName: "test" };
+    mockContextResponse = "new ctx";
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createContextInjectionHook(client, "test", MOCK_PORT);
     const output = { system: ["existing system prompt"] };

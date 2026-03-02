@@ -4,19 +4,18 @@ import { createCompactionHook } from "./compaction.js";
 
 let mockServer: ReturnType<typeof Bun.serve>;
 const MOCK_PORT = 37903;
-let mockContextResponse: unknown = {
-  context: "important memories",
-  projectName: "test",
-};
+let mockContextResponse: unknown = "important memory data";
 let mockStatus = 200;
 
 beforeAll(() => {
   mockServer = Bun.serve({
     port: MOCK_PORT,
     async fetch() {
-      return new Response(JSON.stringify(mockContextResponse), {
+      // Return plain text for context inject endpoint
+      const text = typeof mockContextResponse === "string" ? mockContextResponse : "";
+      return new Response(text, {
         status: mockStatus,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
       });
     },
   });
@@ -29,10 +28,7 @@ afterAll(() => {
 describe("createCompactionHook", () => {
   it("injects memory context into output.context array", async () => {
     mockStatus = 200;
-    mockContextResponse = {
-      context: "important memory data",
-      projectName: "test",
-    };
+    mockContextResponse = "important memory data";
 
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createCompactionHook(client, "test");
@@ -48,10 +44,7 @@ describe("createCompactionHook", () => {
 
   it("skips injection when context is null", async () => {
     mockStatus = 200;
-    mockContextResponse = {
-      context: null,
-      projectName: "test",
-    };
+    mockContextResponse = "";
 
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createCompactionHook(client, "test");
@@ -64,10 +57,7 @@ describe("createCompactionHook", () => {
 
   it("does not replace existing context entries", async () => {
     mockStatus = 200;
-    mockContextResponse = {
-      context: "new data",
-      projectName: "test",
-    };
+    mockContextResponse = "new data";
 
     const client = new ClaudeMemClient(MOCK_PORT, 2000);
     const hook = createCompactionHook(client, "test");

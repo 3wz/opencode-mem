@@ -27,11 +27,21 @@ beforeAll(() => {
         await new Promise((resolve) => setTimeout(resolve, mockDelay));
       }
 
+      // Return plain text for context inject endpoint
+      if (url.pathname === "/api/context/inject") {
+        const textResponse = typeof mockResponse === "string" ? mockResponse : "";
+        return new Response(textResponse, {
+          status: mockStatus,
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
+
       return new Response(JSON.stringify(mockResponse), {
         status: mockStatus,
         headers: { "Content-Type": "application/json" },
       });
     },
+  
   });
 });
 
@@ -76,14 +86,23 @@ describe("ClaudeMemClient", () => {
   });
 
   it("getContext calls GET /api/context/inject with encoded project", async () => {
-    mockResponse = { context: "some context", projectName: "myproject" };
+    mockResponse = "some context" as any;  // plain text string
     const client = new ClaudeMemClient(mockPort, 2000);
 
     const result = await client.getContext("my project");
 
-    expect(result).toEqual({ context: "some context", projectName: "myproject" });
+    expect(result).toEqual({ context: "some context", projectName: "my project" });
     expect(lastRequest?.path).toBe("/api/context/inject?project=my%20project");
     expect(lastRequest?.method).toBe("GET");
+  });
+
+  it("getContext returns null for empty text response", async () => {
+    mockResponse = "" as any;  // empty string
+    const client = new ClaudeMemClient(mockPort, 2000);
+
+    const result = await client.getContext("my project");
+
+    expect(result).toBeNull();
   });
 
   it("initSession calls POST /api/sessions/init", async () => {

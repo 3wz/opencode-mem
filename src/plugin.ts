@@ -84,7 +84,7 @@ function buildHooks(
 
         // If switching to a different session, complete the old one so the worker
         // marks it as completed and context injection can find it.
-        if (state.sessionId && state.sessionId !== newSessionId && state.isWorkerRunning) {
+        if (state.sessionId && state.sessionId !== newSessionId) {
           void memClient.completeSession({ contentSessionId: state.sessionId });
         }
 
@@ -99,7 +99,14 @@ function buildHooks(
       if (event.type === "session.deleted") {
         const sessionId = event.properties.info.id;
 
-        if (state.isWorkerRunning && sessionId) {
+        if (sessionId) {
+          if (!state.summarySent) {
+            void memClient.sendSummary({
+              contentSessionId: sessionId,
+              last_assistant_message: state.lastAssistantMessage || undefined,
+            });
+            state.summarySent = true;
+          }
           void memClient.completeSession({
             contentSessionId: sessionId,
           });

@@ -57,9 +57,25 @@ export class ClaudeMemClient {
 
   /** Fetch context for a project. Returns null if unavailable. */
   async getContext(projectName: string): Promise<ContextInjectionResponse | null> {
-    return this.safeGet<ContextInjectionResponse>(
-      `/api/context/inject?project=${encodeURIComponent(projectName)}`,
-    );
+    const path = `/api/context/inject?project=${encodeURIComponent(projectName)}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeout);
+    try {
+      const res = await fetch(`${this.baseUrl}${path}`, { signal: controller.signal });
+      if (!res.ok) {
+        return null;
+      }
+      const text = await res.text();
+      if (!text.trim()) {
+        return null;
+      }
+      return { context: text, projectName };
+    } catch (err) {
+      this.log(`[claude-mem] GET ${path} failed: ${err}`);
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /** Initialize a session. Fire-and-forget. */

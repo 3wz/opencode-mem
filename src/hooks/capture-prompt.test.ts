@@ -199,7 +199,7 @@ describe("createCapturePromptHook", () => {
     expect(body?.prompt).toContain("ignored text");
   });
 
-  it("calls initSession only on first message (promptNumber === 1)", async () => {
+  it("calls initSession on every message", async () => {
     receivedBody = null;
     requestCount = 0;
     const state = makeState();
@@ -212,23 +212,37 @@ describe("createCapturePromptHook", () => {
       { message: {}, parts: [{ type: "text", text: "first prompt" }] },
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 150));
     const firstRequestCount = requestCount;
 
     // Second message
-    receivedBody = null;
-    requestCount = 0;
     await hook(
       { sessionID: "sess_1" },
       { message: {}, parts: [{ type: "text", text: "second prompt" }] },
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const secondRequestCount = requestCount;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    const secondRequestCount = requestCount - firstRequestCount;
 
-    // First message should trigger initSession
+    // Both messages should trigger initSession
     expect(firstRequestCount).toBeGreaterThan(0);
-    // Second message should NOT trigger initSession
-    expect(secondRequestCount).toBe(0);
+    expect(secondRequestCount).toBeGreaterThan(0);
+  });
+
+  it("skips when agent field is present (non-user message)", async () => {
+    receivedBody = null;
+    requestCount = 0;
+    const client = new ClaudeMemClient(MOCK_PORT, 2000);
+    const hook = createCapturePromptHook(client, makeState());
+
+    await hook(
+      { sessionID: "sess_1", agent: "assistant" },
+      { message: {}, parts: [{ type: "text", text: "hello from agent" }] },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(requestCount).toBe(0);
+    expect(receivedBody).toBeNull();
   });
 });

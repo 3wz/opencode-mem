@@ -229,7 +229,7 @@ describe("OpenCodeMem plugin", () => {
     expect(mockCompleteSession).toHaveBeenCalledTimes(0);
   });
 
-  it("does not call worker methods when worker is unavailable", async () => {
+  it("calls completeSession on session.deleted even when worker is unavailable", async () => {
     detectInstalled = false;
     detectWorkerRunning = false;
 
@@ -245,7 +245,37 @@ describe("OpenCodeMem plugin", () => {
     await expect(hooks.event!(createSessionEvent("session.deleted") as any)).resolves.toBeUndefined();
 
     expect(mockInitSession).toHaveBeenCalledTimes(0);
-    expect(mockCompleteSession).toHaveBeenCalledTimes(0);
+    // completeSession is now called unconditionally on session.deleted (isWorkerRunning gate removed)
+    expect(mockCompleteSession).toHaveBeenCalledTimes(1);
+    expect(mockCompleteSession).toHaveBeenCalledWith({
+      contentSessionId: "sess_test123",
+    });
+  });
+
+  it("sends summary fallback on session.deleted when not already sent", async () => {
+    detectInstalled = true;
+    detectWorkerRunning = true;
+
+    const OpenCodeMem = createPluginWithDependencies(
+      (_port, _timeout, _log, _host) => new MockClaudeMemClient(),
+      mockDetect,
+      mockGetPort,
+    );
+    const input = createMockInput();
+    const hooks = await OpenCodeMem(input as any);
+
+    // Fire session.created to set up state
+    await hooks.event!(createSessionEvent("session.created") as any);
+    
+    // Fire session.deleted WITHOUT firing session.idle first
+    await hooks.event!(createSessionEvent("session.deleted") as any);
+
+    // Wait for fire-and-forget
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Summary should have been sent as fallback
+    expect(mockSendSummary).toHaveBeenCalledTimes(1);
+    expect(mockCompleteSession).toHaveBeenCalledTimes(1);
   });
 
   it("does not call initSession on session.created (even with fallback directory)", async () => {
