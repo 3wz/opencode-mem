@@ -5,6 +5,9 @@
   "description": "OpenCode plugin adapter for claude-mem persistent memory",
   "types": "./dist/index.d.ts",
   "main": "./dist/index.js",
+  "bin": {
+    "opencode-claude-mem": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -13,6 +16,7 @@
   },
   "files": [
     "dist/",
+    "dist/cli.js",
     "skills/",
     "README.md"
   ],
@@ -24,13 +28,14 @@
     "ai"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && bun build src/cli/index.ts --target=node --outfile dist/cli.js",
+    "build:cli": "bun build src/cli/index.ts --target=node --outfile dist/cli.js",
     "test": "bun test",
     "check": "bunx tsc --noEmit"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bloodf/opencode-mem.git"
+    "url": "git+https://github.com/bloodf/opencode-mem.git"
   },
   "homepage": "https://github.com/bloodf/opencode-mem#readme",
   "bugs": {
@@ -45,8 +50,10 @@
     "@opencode-ai/plugin": "*"
   },
   "devDependencies": {
+    "@clack/prompts": "latest",
     "@opencode-ai/plugin": "latest",
     "@types/bun": "latest",
+    "picocolors": "latest",
     "typescript": "^5.0.0"
   }
 }

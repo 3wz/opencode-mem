@@ -134,13 +134,23 @@ Then in `opencode.json`:
 }
 ```
 
-### Local path
+### Interactive Installer (Recommended for new users)
 
-```json
-{
-  "plugin": ["./node_modules/@bloodf/opencode-claude-mem"]
-}
+```bash
+npx @bloodf/opencode-claude-mem install --no-tui
 ```
+
+Or for LLM-guided setup, paste this URL into your AI agent:
+
+```
+https://raw.githubusercontent.com/bloodf/opencode-claude-mem/main/docs/guide/installation.md
+```
+
+**Optional flags:**
+- `--skip-worker` — Skip worker startup if you manage the worker separately
+- `--port <number>` — Specify a custom worker port (default: 37777)
+
+### Local path
 
 ### Copy to plugins directory
 
