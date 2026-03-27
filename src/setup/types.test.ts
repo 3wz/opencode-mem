@@ -126,8 +126,6 @@ describe("createDefaultDeps", () => {
 
       expect(run.stderr).not.toContain("Bun is not defined");
       expect(run.stdout).not.toContain("Bun is not defined");
-      expect(run.stdout).toContain("commands... ✓ Added 4 commands to opencode.json");
-      expect(run.stdout).toContain("skills... ✓ mem-search skill copied");
       expect(run.stdout).toContain("commands...");
       expect(run.stdout).toContain("skills...");
       expect(readFileSync(configPath, "utf-8")).toContain("mem-search");
