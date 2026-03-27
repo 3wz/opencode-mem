@@ -1,4 +1,5 @@
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "node:url";
 import { cp, mkdir } from "node:fs/promises";
 import { getWorkerPort } from "../utils/detect.js";
 
@@ -67,6 +68,8 @@ export interface SetupDeps {
 export function createDefaultDeps(
   log: (msg: string, level?: "info" | "warn" | "error") => void,
 ): SetupDeps {
+  const pluginDir = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
   return {
     which: (cmd: string) => {
       return Bun.which(cmd) ?? null;
@@ -106,7 +109,7 @@ export function createDefaultDeps(
 
     log,
 
-    pluginDir: join(import.meta.dir, "..", ".."),
+    pluginDir,
 
     getWorkerPort: () => getWorkerPort(),
 

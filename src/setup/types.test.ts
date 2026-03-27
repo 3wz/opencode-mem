@@ -1,4 +1,6 @@
 import { describe, it, expect } from "bun:test";
+import { dirname, join } from "path";
+import { fileURLToPath } from "node:url";
 import type { SetupDeps, SetupStepResult, SetupResult } from "./types.js";
 import { createDefaultDeps } from "./types.js";
 
@@ -85,5 +87,11 @@ describe("createDefaultDeps", () => {
   it("pluginDir ends with opencode-mem", () => {
     const deps = createDefaultDeps(mockLog);
     expect(deps.pluginDir.endsWith("opencode-mem")).toBe(true);
+  });
+
+  it("pluginDir is derived from import.meta.url", () => {
+    const deps = createDefaultDeps(mockLog);
+    const expected = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+    expect(deps.pluginDir).toBe(expected);
   });
 });
