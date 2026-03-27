@@ -1,6 +1,6 @@
 {
   "name": "@shuian/opencode-claude-mem",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "description": "OpenCode plugin adapter for claude-mem persistent memory",
   "types": "./dist/index.d.ts",
