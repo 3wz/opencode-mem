@@ -1,7 +1,12 @@
 import { existsSync } from "fs";
+import { spawn } from "node:child_process";
 import { homedir } from "os";
 import { join } from "path";
 import { ClaudeMemClient } from "./client.js";
+
+function hasBunRuntime(): boolean {
+  return typeof Bun !== "undefined" && typeof Bun.spawn === "function";
+}
 
 /**
  * Check if the claude-mem worker is currently running.
@@ -49,11 +54,19 @@ export async function startWorker(
 
   try {
     // Spawn detached — fire and forget
-    const proc = Bun.spawn([workerCmd.cmd, ...workerCmd.args], {
-      detached: true,
-      stdio: ["ignore", "ignore", "ignore"],
-    });
-    proc.unref(); // Don't keep process alive waiting for worker
+    if (hasBunRuntime()) {
+      const proc = Bun.spawn([workerCmd.cmd, ...workerCmd.args], {
+        detached: true,
+        stdio: ["ignore", "ignore", "ignore"],
+      });
+      proc.unref(); // Don't keep process alive waiting for worker
+    } else {
+      const proc = spawn(workerCmd.cmd, workerCmd.args, {
+        detached: true,
+        stdio: "ignore",
+      });
+      proc.unref();
+    }
 
     // Wait for worker to be ready (poll with timeout)
     const start = Date.now();

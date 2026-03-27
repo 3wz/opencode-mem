@@ -1,6 +1,9 @@
 import { describe, it, expect } from "bun:test";
 import { dirname, join } from "path";
 import { fileURLToPath } from "node:url";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import type { SetupDeps, SetupStepResult, SetupResult } from "./types.js";
 import { createDefaultDeps } from "./types.js";
 
@@ -93,5 +96,44 @@ describe("createDefaultDeps", () => {
     const deps = createDefaultDeps(mockLog);
     const expected = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
     expect(deps.pluginDir).toBe(expected);
+  });
+
+  it("built Node setup path works without Bun global", () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "opencode-mem-node-deps-"));
+    const fakeHome = join(tempRoot, "home");
+    const configDir = join(fakeHome, ".config", "opencode");
+    const configPath = join(configDir, "opencode.json");
+
+    try {
+      mkdirSync(configDir, { recursive: true });
+      writeFileSync(configPath, "{}", "utf-8");
+
+      const build = spawnSync("npm", ["run", "build"], {
+        cwd: join(dirname(fileURLToPath(import.meta.url)), "..", ".."),
+        encoding: "utf-8",
+      });
+      expect(build.status).toBe(0);
+
+      const run = spawnSync("node", ["dist/cli.js", "--no-tui", "--skip-worker"], {
+        cwd: join(dirname(fileURLToPath(import.meta.url)), "..", ".."),
+        encoding: "utf-8",
+        env: {
+          ...process.env,
+          HOME: fakeHome,
+          USERPROFILE: fakeHome,
+        },
+      });
+
+      expect(run.stderr).not.toContain("Bun is not defined");
+      expect(run.stdout).not.toContain("Bun is not defined");
+      expect(run.stdout).toContain("commands... ✓ Added 4 commands to opencode.json");
+      expect(run.stdout).toContain("skills... ✓ mem-search skill copied");
+      expect(run.stdout).toContain("commands...");
+      expect(run.stdout).toContain("skills...");
+      expect(readFileSync(configPath, "utf-8")).toContain("mem-search");
+      expect(existsSync(join(fakeHome, ".config", "opencode", "skills", "mem-search", "SKILL.md"))).toBe(true);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 });

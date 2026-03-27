@@ -134,10 +134,13 @@ describe("getMcpServerPath (filesystem)", () => {
     const os = require("os");
     const cacheDir = join(os.homedir(), ".claude", "plugins", "cache", "thedotmack", "claude-mem");
     const hasCacheDir = existsSync(cacheDir);
+    const hasAnyMcpServer = hasCacheDir && require("fs").readdirSync(cacheDir).some((dir: string) => {
+      return existsSync(join(cacheDir, dir, "scripts", "mcp-server.cjs"));
+    });
 
     const path = getMcpServerPath();
 
-    if (hasCacheDir) {
+    if (hasAnyMcpServer) {
       // If the cache dir exists on this machine, we should get a path back
       expect(path).not.toBeNull();
       expect(path!).toContain("mcp-server.cjs");
@@ -158,6 +161,22 @@ describe("getMcpServerPath (filesystem)", () => {
       // Result is either a valid path or null — never throws
       expect(result === null || typeof result === "string").toBe(true);
     }).not.toThrow();
+  });
+
+  it("does not throw when Bun helpers are unavailable", () => {
+    const originalSpawnSync = Bun.spawnSync;
+    const originalWhich = Bun.which;
+
+    try {
+      Bun.spawnSync = undefined as unknown as typeof Bun.spawnSync;
+      Bun.which = undefined as unknown as typeof Bun.which;
+      expect(() => getMcpServerPath()).not.toThrow();
+      const result = getMcpServerPath();
+      expect(result === null || typeof result === "string").toBe(true);
+    } finally {
+      Bun.spawnSync = originalSpawnSync;
+      Bun.which = originalWhich;
+    }
   });
 
   it("prefers stable release over prerelease when versions tie", () => {

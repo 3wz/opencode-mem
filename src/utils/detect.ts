@@ -1,9 +1,49 @@
 import { existsSync, readdirSync } from "fs";
 import { readFileSync } from "fs";
 import { homedir } from "os";
-import { join } from "path";
+import { delimiter, join } from "path";
+import { accessSync, constants as fsConstants } from "node:fs";
+import { spawnSync } from "node:child_process";
 import type { ClaudeMemConfig } from "../types.js";
 import { ClaudeMemClient } from "../client.js";
+
+function hasBunRuntime(): boolean {
+  return typeof Bun !== "undefined"
+    && typeof Bun.which === "function"
+    && typeof Bun.spawnSync === "function";
+}
+
+function findCommandInPath(cmd: string): string | null {
+  const pathValue = process.env.PATH;
+  if (!pathValue) {
+    return null;
+  }
+
+  const extensions = process.platform === "win32"
+    ? (process.env.PATHEXT?.split(";").filter(Boolean) ?? [".EXE", ".CMD", ".BAT", ".COM"])
+    : [""];
+
+  for (const entry of pathValue.split(delimiter)) {
+    if (!entry) {
+      continue;
+    }
+
+    for (const extension of extensions) {
+      const candidate = process.platform === "win32" && extension && cmd.toLowerCase().endsWith(extension.toLowerCase())
+        ? join(entry, cmd)
+        : join(entry, `${cmd}${extension}`);
+
+      try {
+        accessSync(candidate, fsConstants.X_OK);
+        return candidate;
+      } catch {
+        // Continue searching PATH.
+      }
+    }
+  }
+
+  return null;
+}
 
 const DEFAULT_CONFIG: ClaudeMemConfig = {
   port: 37777,
@@ -129,7 +169,9 @@ export function getMcpServerPath(): string | null {
 
     // Strategy 2: Check npm global root
     try {
-      const result = Bun.spawnSync(["npm", "root", "-g"], { stdout: "pipe" });
+      const result = hasBunRuntime()
+        ? Bun.spawnSync(["npm", "root", "-g"], { stdout: "pipe" })
+        : spawnSync("npm", ["root", "-g"], { encoding: "utf-8" });
       const npmRoot = result.stdout?.toString().trim();
       if (npmRoot && npmRoot.length > 0) {
         const npmPath = join(npmRoot, "claude-mem", "scripts", "mcp-server.cjs");
@@ -142,7 +184,7 @@ export function getMcpServerPath(): string | null {
     }
 
     // Strategy 3: Check Bun.which("claude-mem")
-    const claudeMemBin = Bun.which("claude-mem");
+    const claudeMemBin = hasBunRuntime() ? Bun.which("claude-mem") : findCommandInPath("claude-mem");
     if (claudeMemBin) {
       // Resolve to package root by going up from bin
       const packageRoot = join(claudeMemBin, "..", "..");
