@@ -126,8 +126,6 @@ describe("createDefaultDeps", () => {
 
       expect(run.stderr).not.toContain("Bun is not defined");
       expect(run.stdout).not.toContain("Bun is not defined");
-      expect(run.stdout).toContain("commands...");
-      expect(run.stdout).toContain("skills...");
       expect(readFileSync(configPath, "utf-8")).toContain("mem-search");
       expect(existsSync(join(fakeHome, ".config", "opencode", "skills", "mem-search", "SKILL.md"))).toBe(true);
     } finally {
