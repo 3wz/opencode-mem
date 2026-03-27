@@ -5,14 +5,14 @@
 Paste this URL into your LLM agent to get guided installation:
 
 ```
-https://raw.githubusercontent.com/bloodf/opencode-claude-mem/main/docs/guide/installation.md
+https://raw.githubusercontent.com/3wz/opencode-mem/main/docs/guide/installation.md
 ```
 
 ---
 
 ## For LLM Agents
 
-You are an AI assistant helping install `@bloodf/opencode-claude-mem`, a persistent memory plugin for OpenCode that connects to the same claude-mem worker as Claude Code.
+You are an AI assistant helping install `@shuian/opencode-claude-mem`, a persistent memory plugin for OpenCode that connects to the same claude-mem worker as Claude Code.
 
 ### Step 0: Check Prerequisites
 
@@ -34,7 +34,7 @@ If OpenCode is not found, direct the user to [opencode.ai](https://opencode.ai).
 
 Run:
 ```bash
-npx @bloodf/opencode-claude-mem install --no-tui
+npx @shuian/opencode-claude-mem install --no-tui
 ```
 
 **Optional flags:**
@@ -47,7 +47,7 @@ If not already added by the install command, add this to `~/.config/opencode/ope
 
 ```json
 {
-  "plugin": ["@bloodf/opencode-claude-mem"]
+  "plugin": ["@shuian/opencode-claude-mem"]
 }
 ```
 

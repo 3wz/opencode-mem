@@ -39,7 +39,7 @@ Add one line to your `opencode.json`:
 
 ```json
 {
-  "plugin": ["@bloodf/opencode-claude-mem"]
+  "plugin": ["@shuian/opencode-claude-mem"]
 }
 ```
 
@@ -123,27 +123,27 @@ All steps are **idempotent** (safe to run multiple times) and **independent** (i
 ### npm (recommended)
 
 ```bash
-npm install @bloodf/opencode-claude-mem
+npm install @shuian/opencode-claude-mem
 ```
 
 Then in `opencode.json`:
 
 ```json
 {
-  "plugin": ["@bloodf/opencode-claude-mem"]
+  "plugin": ["@shuian/opencode-claude-mem"]
 }
 ```
 
 ### Interactive Installer (Recommended for new users)
 
 ```bash
-npx @bloodf/opencode-claude-mem install --no-tui
+npx @shuian/opencode-claude-mem install --no-tui
 ```
 
 Or for LLM-guided setup, paste this URL into your AI agent:
 
 ```
-https://raw.githubusercontent.com/bloodf/opencode-claude-mem/main/docs/guide/installation.md
+https://raw.githubusercontent.com/3wz/opencode-mem/main/docs/guide/installation.md
 ```
 
 **Optional flags:**
@@ -155,7 +155,7 @@ https://raw.githubusercontent.com/bloodf/opencode-claude-mem/main/docs/guide/ins
 ### Copy to plugins directory
 
 ```bash
-cp -r node_modules/@bloodf/opencode-claude-mem .opencode/plugins/opencode-claude-mem
+cp -r node_modules/@shuian/opencode-claude-mem .opencode/plugins/opencode-claude-mem
 ```
 
 ### Prerequisites
@@ -221,7 +221,22 @@ The path to `mcp-server.cjs` is auto-configured during setup. Run the plugin onc
 The mem-search skill is copied automatically. To install manually:
 
 ```bash
-cp -r node_modules/@bloodf/opencode-claude-mem/skills/mem-search ~/.config/opencode/skills/
+cp -r node_modules/@shuian/opencode-claude-mem/skills/mem-search ~/.config/opencode/skills/
+
+## Release Workflow
+
+This fork publishes from GitHub Actions using a **manual version bump + tag trigger** flow.
+
+1. Update `package.json.version`
+2. Commit the release change
+3. Create a matching tag such as `v1.2.1`
+4. Push your branch and tag: `git push origin main --tags`
+
+When a `v*` tag is pushed, GitHub Actions will verify the tag matches `package.json`, build the package, publish to npm, and create a GitHub Release.
+
+### Required GitHub Secret
+
+- `NPM_TOKEN` — npm access token with permission to publish `@shuian/opencode-claude-mem`
 ```
 
 ## Memory Commands
