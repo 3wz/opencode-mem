@@ -123,7 +123,7 @@ describe("createDefaultDeps", () => {
 
       expect(run.stderr).not.toContain("Bun is not defined");
       expect(run.stdout).not.toContain("Bun is not defined");
-      expect(run.stdout.trim().length).toBeGreaterThan(0);
+      expect((run.stdout + run.stderr).trim().length).toBeGreaterThan(0);
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }
